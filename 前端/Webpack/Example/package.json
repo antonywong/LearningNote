@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack",
-    "server": "webpack-dev-server --open"
+    "server": "webpack-dev-server --open",
+    "build": "set NODE_ENV=production && ./node_modules/.bin/webpack --config ./webpack.production.config.js --progress"
   },
   "author": "",
   "license": "ISC",

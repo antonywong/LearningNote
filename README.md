@@ -1,2 +1,3 @@
 # 学习笔记
-LearningNote
+about：  
+Ionic & Linux & Webpack & so on...
