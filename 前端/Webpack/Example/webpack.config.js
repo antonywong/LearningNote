@@ -33,9 +33,15 @@ module.exports = {
                         options: {
                             modules: true
                         }
+                    }, {
+                        loader: "postcss-loader"
                     }
                 ]
             }
         ]
-    }
+    },
+
+    plugins: [
+        new webpack.BannerPlugin('版权所有，翻版必究')
+    ],
 }
