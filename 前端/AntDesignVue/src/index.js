@@ -1,2 +1,1 @@
-import "./main.css";
-import "./main.less";
+import 'ant-design-vue/dist/antd.less'
