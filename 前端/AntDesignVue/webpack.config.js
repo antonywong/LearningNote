@@ -18,7 +18,10 @@ module.exports = {
                     loader: "less-loader",
                     options: {
                         modifyVars: {
-                            'primary-color': '#2649e8',
+                            //景德镇
+                            //'primary-color': '#2649e8',
+                            //江苏省整合
+                            'primary-color': '#977c5e',
                         },
                         javascriptEnabled: true,
                     }
