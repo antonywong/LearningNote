@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31229.75
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WindowsService", "WindowsService\WindowsService.csproj", "{1B0E02E4-0A77-4C20-9D3F-4178F35858AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APP", "APP\APP.csproj", "{7B01D9CA-1995-4493-AD6A-1C4CDD0EC3E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.Common", "CH.Common\CH.Common.csproj", "{870A5C61-3FFE-4060-B7D1-79112FF4B744}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1B0E02E4-0A77-4C20-9D3F-4178F35858AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B0E02E4-0A77-4C20-9D3F-4178F35858AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B0E02E4-0A77-4C20-9D3F-4178F35858AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B0E02E4-0A77-4C20-9D3F-4178F35858AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B01D9CA-1995-4493-AD6A-1C4CDD0EC3E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B01D9CA-1995-4493-AD6A-1C4CDD0EC3E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B01D9CA-1995-4493-AD6A-1C4CDD0EC3E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B01D9CA-1995-4493-AD6A-1C4CDD0EC3E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{870A5C61-3FFE-4060-B7D1-79112FF4B744}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{870A5C61-3FFE-4060-B7D1-79112FF4B744}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{870A5C61-3FFE-4060-B7D1-79112FF4B744}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{870A5C61-3FFE-4060-B7D1-79112FF4B744}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8B48BAAD-4975-4786-965D-B8C0CEA70D02}
+	EndGlobalSection
+EndGlobal

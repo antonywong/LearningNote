@@ -1,0 +1,14 @@
+{
+  "name": "stocktool",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node app.js E:\\SkyDrive\\文档\\StockTool.db"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "iconv-lite": "^0.4.24",
+    "sqlite3": "^4.0.6"
+  }
+}
