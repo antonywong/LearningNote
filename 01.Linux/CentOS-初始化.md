@@ -32,16 +32,31 @@ ps -e | grep sshd
 
 # 防火墙
 
+## 服务
+    systemctl start firewalld
+    systemctl stop firewalld
+    systemctl enable firewalld
+    systemctl status firewalld
+
 ## 重新加载
-firewall-cmd --state                        Return and print firewalld state
-firewall-cmd --reload                       Reload firewall and keep state information
-firewall-cmd --complete-reload              Reload firewall and lose state information
-firewall-cmd --runtime-to-permanent         Create permanent from runtime configuration
+    firewall-cmd --state                        Return and print firewalld state
+    firewall-cmd --reload                       Reload firewall and keep state information
+    firewall-cmd --complete-reload              Reload firewall and lose state information
+    firewall-cmd --runtime-to-permanent         Create permanent from runtime configuration
 
 ## 端口控制
-firewall-cmd --list-ports
-firewall-cmd --add-port=22/tcp --permanent
-firewall-cmd --remove-port=9022/tcp --permanent
+    firewall-cmd --list-ports
+    firewall-cmd --add-port=22/tcp --permanent
+    firewall-cmd --remove-port=9022/tcp --permanent
+
+## 端口转发
+    firewall-cmd --add-masquerade --permanent       Enable IPv4 masquerade for a zone [P] [Z] [T]
+    firewall-cmd --remove-masquerade --permanent    Disable IPv4 masquerade for a zone [P] [Z]
+    firewall-cmd --query-masquerade                 Return whether IPv4 masquerading has been enabled for a zone [P] [Z]
+
+    firewall-cmd --add-forward-port=port=53306:proto=tcp:toaddr=172.16.100.61:toport=3306 --permanent
+    firewall-cmd --remove-forward-port=port=53306:proto=tcp --permanent
+    firewall-cmd --query-forward-port=port=53306:proto=tcp
 
 
 # 其他

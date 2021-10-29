@@ -34,6 +34,8 @@ namespace WebApp.Biz
 
             TradingDay.Configure();
 
+            Monitor.Run(DateTime.Now, EnumPeriod.五分钟);
+
             if (TradingDay.IsTradingDay(DateTime.Now))
             {
                 StockInfo.Run();
@@ -57,42 +59,48 @@ namespace WebApp.Biz
         private static void Timer_Elapsed(Object sender, ElapsedEventArgs e)
         {
             timer.Enabled = false;
-            DateTime now = DateTime.Now.ToLocalTime();
-            Int32 hm = now.Hour * 100 + now.Minute;
-
-            if (TradingDay.IsTradingDay(now))
+            try
             {
-                Console.Write(hm.ToString() + ";");
+                DateTime now = DateTime.Now.ToLocalTime();
+                Int32 hm = now.Hour * 100 + now.Minute;
 
-                //
-                if (hm == 915) { StockInfo.Run(); }
-
-                //
-                if ((935 <= hm && hm <= 1145 || 1305 <= hm && hm <= 1515) && !Monitor.IsRunning) { Monitor.Run(now, EnumPeriod.五分钟); }
-
-                //
-                if (1520 <= hm && hm <= 1600 && !Monitor.IsRunning) { Monitor.Run(now, EnumPeriod.日); HighLow.Run(); }
-
-                //
-                if (hm == 1700)
+                if (TradingDay.IsTradingDay(now))
                 {
-                    HighLow.Run(); 
-                    Analiysis.Run(EnumPeriod.日);
+                    Console.Write(hm.ToString() + ";\r\n");
+
+                    //
+                    if (hm == 915) { StockInfo.Run(); }
+
+                    //
+                    if ((935 <= hm && hm <= 1132 || 1305 <= hm && hm <= 1502) && !Monitor.IsRunning) { Monitor.Run(now, EnumPeriod.五分钟); }
+
+                    //
+                    if (1530 <= hm && hm <= 1545 && !Monitor.IsRunning) { Monitor.Run(now, EnumPeriod.日); HighLow.Run(); }
+
+                    //
+                    if (hm == 1700)
+                    {
+                        Analiysis.Run(EnumPeriod.日);
+                    }
+                }
+
+                //
+                if (now.DayOfWeek == DayOfWeek.Sunday && hm == 200)
+                {
+                    Monitor.Run(now, EnumPeriod.周);
+                    Analiysis.Run(EnumPeriod.周);
+                }
+
+                //
+                if (now.Day == 1 && hm == 100)
+                {
+                    Monitor.Run(now, EnumPeriod.月);
+                    Analiysis.Run(EnumPeriod.月);
                 }
             }
-
-            //
-            if (now.DayOfWeek == DayOfWeek.Sunday && hm == 200)
+            catch(Exception ex)
             {
-                Monitor.Run(now, EnumPeriod.周);
-                Analiysis.Run(EnumPeriod.周);
-            }
-
-            //
-            if (now.Day == 1 && hm == 100)
-            {
-                Monitor.Run(now, EnumPeriod.月);
-                Analiysis.Run(EnumPeriod.月);
+                Console.Write(ex.Message);
             }
             timer.Enabled = true;
         }

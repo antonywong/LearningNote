@@ -16,6 +16,12 @@ clef init --configdir "/app/data"
 sudo docker rm bee-clef -f
 
 
+# bee-dashboard
+sudo docker build . -t bee-dashboard
+sudo docker run --name BeeDashboard --rm -p 8080:8080 bee-dashboard
+
+sudo docker exec -it BeeDashboard /bin/sh
+
 # bee
 sudo docker pull ethersphere/bee:latest
 
@@ -26,9 +32,12 @@ sudo docker run -d --name bee -p 1635:1635 -p 1634:1634 -p 1633:1633\
     -v /mnt/md0/swarm/bee:/home/bee/.bee \
     --rm -it ethersphere/bee:latest \
     start \
-        --welcome-message="Bzzzz bzzz bzz bzz. 🐝" \
-        --swap-endpoint wss://goerli.infura.io/ws/v3/460e30f8d43841aaa9fb0b1c6a646e26 \
+        --welcome-message="鸡蛋鸡蛋大鸡蛋！！！" \
+        --swap-endpoint http://10.10.10.18:8545/ \
         --debug-api-enable
+
+sudo docker rm bee -f
+
 
 curl localhost:1633
 curl -s localhost:1635/peers | jq ".peers | length"
@@ -50,6 +59,9 @@ sudo docker run --name bee -p 1635:1635 -p 1634:1634 -p 1633:1633\
     -v /mnt/md0/swarm/bee:/home/bee/.bee \
     --rm -it ethersphere/bee:latest \
     start \
-        --welcome-message="Bzzzz bzzz bzz bzz. 🐝" \
-        --swap-endpoint wss://goerli.infura.io/ws/v3/460e30f8d43841aaa9fb0b1c6a646e26 \
+        --welcome-message="鸡蛋鸡蛋大鸡蛋！！！" \
+        --swap-endpoint http://10.10.10.18:8545/ \
         --debug-api-enable
+        
+
+        

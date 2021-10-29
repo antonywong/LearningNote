@@ -122,7 +122,7 @@ namespace WebApp.Biz.Stock
             }
 
             Int32 datalen = Math.Min(500, Convert.ToInt32(360000 / _period.GetHashCode()));
-            var url = $"https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketDataService.getKLineData?symbol={stock.code}&scale={_period.GetHashCode()}&datalen={datalen}";
+            var url = $"http://quotes.sina.cn/cn/api/json_v2.php/CN_MarketDataService.getKLineData?symbol={stock.code}&scale={_period.GetHashCode()}&datalen={datalen}";
             String res = HttpRequestHelper.GET(url);
             List<SinaK> resKs = JsonHelper.FromJson<List<SinaK>>(res);
             if (oldK.Count == 0)

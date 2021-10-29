@@ -49,7 +49,6 @@ namespace WebApp.Biz.Stock
             }
 
             List<StockK> days = mssql.StockK.Where(x => x.code == vStock.code && x.type == EnumPeriod.日.GetHashCode()).OrderBy(x => x.day).ToList();
-
             Int32 newHigh = getHigh(days);
             Int32 newLow = getLow(days);
 
