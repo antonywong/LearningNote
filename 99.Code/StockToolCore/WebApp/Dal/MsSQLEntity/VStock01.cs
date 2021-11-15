@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace WebApp.Dal.MsSQL
+﻿namespace WebApp.Dal.MsSQL
 {
     public class VStock01 : BaseStock
     {

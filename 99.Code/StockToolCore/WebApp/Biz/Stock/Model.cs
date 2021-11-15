@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace WebApp.Biz.Stock
+﻿namespace WebApp.Biz.Stock
 {
 
     public class SinaK

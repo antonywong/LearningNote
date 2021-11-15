@@ -1,6 +1,6 @@
-﻿using System;
-using System.Timers;
+﻿using System.Timers;
 using WebApp.Biz.Stock;
+using Monitor = WebApp.Biz.Stock.Monitor;
 
 namespace WebApp.Biz
 {
@@ -12,7 +12,7 @@ namespace WebApp.Biz
         /// <summary>
         /// 定时时钟
         /// </summary>
-        public static Timer timer = null;
+        public static System.Timers.Timer timer = null;
 
         /// <summary>
         /// 配置并启动定时闹钟程序
@@ -45,7 +45,7 @@ namespace WebApp.Biz
 
             Int64 interval = 60 * 1000;//每分钟
 
-            timer = new Timer();
+            timer = new System.Timers.Timer();
             timer.Elapsed += new ElapsedEventHandler(Timer_Elapsed);
             timer.Interval = interval;
             timer.AutoReset = true;

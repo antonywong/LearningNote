@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using WebApp.Dal;
+﻿using WebApp.Dal;
 using WebApp.Dal.MsSQL;
 
 namespace WebApp.Biz.Stock

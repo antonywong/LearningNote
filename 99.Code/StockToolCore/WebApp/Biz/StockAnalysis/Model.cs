@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace WebApp.Biz.StockAnalysis
+﻿namespace WebApp.Biz.StockAnalysis
 {
     public class ModelK
     {

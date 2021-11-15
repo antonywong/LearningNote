@@ -45,6 +45,7 @@ ps -e | grep sshd
     firewall-cmd --runtime-to-permanent         Create permanent from runtime configuration
 
 ## 端口控制
+    firewall-cmd --list-all
     firewall-cmd --list-ports
     firewall-cmd --add-port=22/tcp --permanent
     firewall-cmd --remove-port=9022/tcp --permanent
