@@ -30,7 +30,9 @@ namespace WebApp.Biz
 
             //Monitor.Run(DateTime.Now, EnumPeriod.月);
             //Analiysis.Run(EnumPeriod.月);
-            //return;
+
+            TradingDay.Analyze();
+            return;
 
             TradingDay.Configure();
 
@@ -41,6 +43,7 @@ namespace WebApp.Biz
                 StockInfo.Run();
                 Monitor.Run(DateTime.Now, EnumPeriod.日);
                 HighLow.Run();
+                TradingDay.Analyze();
             }
 
             Int64 interval = 60 * 1000;//每分钟
@@ -56,7 +59,7 @@ namespace WebApp.Biz
         /// 计时器触发事件
         /// </summary>
         /// <param name="sender"></param>
-        private static void Timer_Elapsed(Object sender, ElapsedEventArgs e)
+        private static void Timer_Elapsed(Object? sender, ElapsedEventArgs e)
         {
             timer.Enabled = false;
             try
@@ -76,6 +79,9 @@ namespace WebApp.Biz
 
                     //
                     if (1530 <= hm && hm <= 1545 && !Monitor.IsRunning) { Monitor.Run(now, EnumPeriod.日); HighLow.Run(); }
+
+                    //
+                    if (1550 <= hm && hm <= 1600 && !Monitor.IsRunning) { TradingDay.Analyze(); }
 
                     //
                     if (hm == 1700)
