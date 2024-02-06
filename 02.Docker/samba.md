@@ -5,10 +5,10 @@ sudo mkdir /mnt/md0/samba
 sudo chmod 777 /mnt/md0/samba
 
 sudo docker run -d --name samba -p 139:139 -p 445:445 \
-    -v /mnt/md0/samba:/mount \
+    -v /mnt/md0:/mount \
     --restart=always dperson/samba \
-    -u "wangyj;7" \
-    -s "shared;/mount/;yes;no;no;all;none"
+    -u "wangyj;1" \
+    -s "docker;/mount/;yes;no;no;all;none;wangyj"
 
 sudo docker rm samba -f
 

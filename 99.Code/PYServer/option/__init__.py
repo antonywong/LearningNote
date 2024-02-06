@@ -1,0 +1,10 @@
+# -*- coding: utf-8 -*-
+from crawler import option
+
+UNDERLYINGS = ["sh510050","sh510300","sh510500"]
+
+STACK_COMMISSION_RATE = 0.0001
+OPTION_COMMISSION = 3
+OPTION_MARGIN = 5000
+
+WATCHLIST_COUNT = 6

@@ -1,7 +1,11 @@
 sudo docker pull portainer/portainer-ce
 
-sudo docker run -d --name portainerUI -p 9000:9000 \
+sudo mkdir /mnt/md0/portainer
+sudo mkdir /mnt/md0/portainer/data
+sudo chmod 777 /mnt/md0/portainer/data
+sudo docker run -d --name portainer -p 9000:9000 \
     -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /mnt/md0/portainer/data:/data \
     --restart=always portainer/portainer-ce
 
-sudo docker rm portainerUI -f
+sudo docker rm portainer -f

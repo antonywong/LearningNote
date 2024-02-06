@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 import pymssql
 import config
 
@@ -20,9 +18,15 @@ def queryAll(sql):
     return result
 
 
-def run(sql):
+def run(*sqls):
+    # 如果参数只有一个，且是字符串类型，则将其转换为列表
+    if len(sqls) == 1 and isinstance(sqls[0], str):
+        sqls = [sqls[0]]
+
     c = config.mssqlConnStr
     with pymssql.connect(c[0], c[1], c[2], c[3]) as conn:
         with conn.cursor() as cursor:
-            cursor.execute(sql)
+            for sql in sqls[0]:
+                #print(sql)
+                cursor.execute(sql)
             conn.commit()

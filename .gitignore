@@ -1,11 +1,3 @@
-05.前端/Webpack/Example/node_modules/
-05.前端/Webpack/Example/package-lock.json
-05.前端/Webpack/Example/public/bundle.js
-
-05.前端/AntDesignVue/node_modules/
-05.前端/AntDesignVue/package-lock.json
-05.前端/AntDesignVue/dist
-
 # Logs
 logs
 *.log
@@ -71,5 +63,6 @@ typings/
 __pycache__/
 
 .vs
+.vscode
 bin/
 obj/
