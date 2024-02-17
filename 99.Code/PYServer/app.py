@@ -32,8 +32,7 @@ def listenKeyboard():
                     elif event.key == keyboard.Key.right:
                         __dataPanel.rander(1)
                     elif event.key == keyboard.KeyCode.from_char('t'):
-                        test = cffex_option.get_price('ho2402')
-                        print(test)
+                        print("test")
                     else:
                         #print(event)
                         continue
@@ -46,18 +45,23 @@ def listenKeyboard():
 def collect():
     """定义定时调用采集程序的函数
     """
-    global __isRunning
+    global __isRunning, __collectTime
     while __isRunning:
         print('collect')
+        __collectTime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         # 等待一定时间后再次调用采集程序
         time.sleep(config.analyzeRecordInterval)
 
 
 __dataPanel = data_panel
 __isRunning = True
-threading.Thread(target=listenKeyboard).start()
+__collectTime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+# threading.Thread(target=listenKeyboard).start()
 # threading.Thread(target=collect).start()
 
+
+
+data_panel.collect(__collectTime)
 # kd.syn()
 # def printHelp():
 #     print('exit:退出')

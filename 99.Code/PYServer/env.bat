@@ -1,4 +1,5 @@
 @echo off
 call activate.bat
-call cd 99.Code\PYServer
+call E:
+call cd E:\~GitHub\LearningNote\99.Code\PYServer
 cmd

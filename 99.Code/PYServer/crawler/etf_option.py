@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
-import requests
 from typing import List, Dict
 from crawler import sina_option
 

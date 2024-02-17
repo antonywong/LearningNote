@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
-import option as op
-from crawler import etf_option as etf_op_crawler, cffex_option as cffex_op_crawler
-from dal import mssql
+import time
+
+from data_panel import option_info, option_price
 
 # 标签列表
 __tabs = ('common', 'other1', 'other2')
@@ -50,53 +50,18 @@ def rander(tabMovement: int = 0):
     print(__tabIndex)
 
 
+def collect(collect_time: str):
+    print(collect_time)
+    # option_price = {}
+    # option_price.update(option_price.get_etf_option_price())
+    # option_price.update(option_price.get_cffex_option_price())
+    underlying_price = {}
+    # underlying_price.update(option_price.get_index_price())
+    underlying_price.update(option_price.get_etf_price())
+    print(underlying_price)
+
 def update_option_info():
-    update_etf_option_info()
-    update_cffex_option_info()
-
-
-def update_etf_option_info():
-    contract_month = etf_op_crawler.get_contract_month()
-    expire_day = list(
-        map(lambda x: etf_op_crawler.get_expire_day(x)[0].replace("-", ""),
-            contract_month))
-    underlyings = []
-    for x in op.UNDERLYING:
-        underlyings.extend(x['etf'])
-    optionInfo = etf_op_crawler.get_codes(expire_day, underlyings)
-
-    codes = optionInfo['code'].values.tolist()
-    all_price = etf_op_crawler.get_price(codes)
-
-    sql = ["DELETE FROM OptionInfo"]
-    insert_sql = "INSERT INTO OptionInfo (Code,is_call,expire_day,underlying,strike_price) VALUES ('{}', {}, '{}', '{}',{}*1000)"
-    sql.extend([
-        insert_sql.format(row["code"], row["is_call"], row["expire_day"],
-                          row["underlying"], all_price[row["code"]].loc[7, "值"])
-        for index, row in optionInfo.iterrows()
-    ])
-    mssql.run(sql)
-
-
-def update_cffex_option_info():
-    contract_month = cffex_op_crawler.get_contract_month()
-
-    # expire_day = list(
-    #     map(lambda x: etf_op_crawler.get_expire_day(x)[0].replace("-", ""),
-    #         contract_month))
-    # underlyings = []
-    # for x in op.UNDERLYING:
-    #     underlyings.extend(x['etf'])
-    # optionInfo = etf_op_crawler.get_codes(expire_day, underlyings)
-
-    # codes = optionInfo['code'].values.tolist()
-    # all_price = etf_op_crawler.get_price(codes)
-
-    # sql = ["DELETE FROM OptionInfo"]
-    # insert_sql = "INSERT INTO OptionInfo (Code,is_call,expire_day,underlying,strike_price) VALUES ('{}', {}, '{}', '{}',{}*1000)"
-    # sql.extend([
-    #     insert_sql.format(row["code"], row["is_call"], row["expire_day"],
-    #                       row["underlying"], all_price[row["code"]].loc[7, "值"])
-    #     for index, row in optionInfo.iterrows()
-    # ])
-    # mssql.run(sql)
+    data = []
+    data.extend(option_info.get_etf_option_info())
+    data.extend(option_info.get_cffex_option_info())
+    option_info.update_database(data)

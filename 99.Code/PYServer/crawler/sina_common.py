@@ -2,25 +2,56 @@
 import requests
 import pandas as pd
 import numpy as np
+from typing import List
+
+headers = {
+    "Accept":
+    "*/*",
+    "Accept-Encoding":
+    "gzip, deflate, br",
+    "Accept-Language":
+    "zh-CN,zh;q=0.9,en;q=0.8",
+    "Cache-Control":
+    "no-cache",
+    "Connection":
+    "keep-alive",
+    "Host":
+    "hq.sinajs.cn",
+    "Pragma":
+    "no-cache",
+    "Referer":
+    "https://stock.finance.sina.com.cn/",
+    "sec-ch-ua":
+    '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
+    "sec-ch-ua-mobile":
+    "?0",
+    "sec-ch-ua-platform":
+    '"Windows"',
+    "Sec-Fetch-Dest":
+    "script",
+    "Sec-Fetch-Mode":
+    "no-cors",
+    "Sec-Fetch-Site":
+    "cross-site",
+    "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
+}
 
 
-def get_stock_spot(symbols) -> pd.DataFrame:
-    url = f"http://hq.sinajs.cn/list={','.join(symbols)}"
-    headers = {
-        "Accept": "*/*",
-        "Accept-Encoding": "gzip, deflate",
-        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-        "Cache-Control": "no-cache",
-        "Host": "hq.sinajs.cn",
-        "Pragma": "no-cache",
-        "Proxy-Connection": "keep-alive",
-        "Referer": "http://vip.stock.finance.sina.com.cn/",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
-    }
-    res = requests.get(url, headers=headers).text
-    #print(res)
-    res_data = [x[x.find('"') + 1 : x.rfind('"') ].split(",")[:-1] for x in res.split(";\n") if x]
-    #print(res_data)
+def get_stock_spot(codes: List[str]) -> pd.DataFrame:
+    result = []
+
+    group_size = 200
+    # 分组获取，防止HTTP 431
+    for i in range(0, len(codes), group_size):
+        url = f"http://hq.sinajs.cn/list={','.join(codes[i:i + group_size])}"
+        res = requests.get(url, headers=headers).text
+        res_data = [
+            x[x.find('"') + 1:x.rfind('"')].split(",")[:-1]
+            for x in res.split(";\n") if x
+        ]
+        result.extend(res_data)
+
     field_list = [
         "证券简称",
         "今日开盘价",
@@ -56,11 +87,5 @@ def get_stock_spot(symbols) -> pd.DataFrame:
         "行情时间",
         "停牌状态",
     ]
-    data = np.array(res_data)
-    df = pd.DataFrame(data, columns=field_list)
-    #print(df)
-    return df
 
-
-
-
+    return pd.DataFrame(result, columns=field_list)
