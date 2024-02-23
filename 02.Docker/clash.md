@@ -5,18 +5,20 @@ sudo docker pull dreamacro/clash
 
 sudo mkdir /mnt/md0/clash
 sudo mkdir /mnt/md0/clash/ui
-sudo touch /mnt/md0/clash/config.yaml
-sudo chmod 777 /mnt/md0/clash/config.yaml
+sudo mkdir /mnt/md0/clash/data
+sudo touch /mnt/md0/clash/data/config.yaml
 sudo chmod 777 /mnt/md0/clash/ui
+sudo chmod 777 /mnt/md0/clash/data
 sudo docker run -d --name clash -p 7890:7890 -p 7891:7891 -p 9090:9090 \
-    -v /mnt/md0/clash/config.yaml:/root/.config/clash/config.yaml -v /mnt/md0/clash/ui:/ui \
+    -v /mnt/md0/clash/data:/root/.config/clash
+    -v /mnt/md0/clash/ui:/ui \
     --restart=always dreamacro/clash
 
 ## 配置
-sudo docker exec clash bash
+docker exec -it clash sh
 
 ## 删除
-sudo docker rm clash -f
+docker rm clash -f
 
 
 
