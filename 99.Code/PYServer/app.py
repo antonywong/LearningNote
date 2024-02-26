@@ -14,7 +14,7 @@ from crawler import etf_option, cffex_option
 def listenKeyboard():
     """监听键盘键入，按q退出，按u更新基础数据，按t测试
     """
-    global __isRunning, __dataPanel
+    global __dataPanel, __isRunning
     with keyboard.Events() as events:
         for event in events:
             if isinstance(event, keyboard.Events.Release):
@@ -28,9 +28,9 @@ def listenKeyboard():
                         __dataPanel.update_option_info()
                         print('DONE')
                     elif event.key == keyboard.Key.left:
-                        __dataPanel.rander(-1)
+                        __dataPanel.render(-1)
                     elif event.key == keyboard.Key.right:
-                        __dataPanel.rander(1)
+                        __dataPanel.render(1)
                     elif event.key == keyboard.KeyCode.from_char('t'):
                         print("test")
                     else:
@@ -45,23 +45,19 @@ def listenKeyboard():
 def collect():
     """定义定时调用采集程序的函数
     """
-    global __isRunning, __collectTime
+    global __dataPanel, __isRunning
     while __isRunning:
-        print('collect')
-        __collectTime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        __dataPanel.collect()
+        __dataPanel.render(0)
         # 等待一定时间后再次调用采集程序
         time.sleep(config.analyzeRecordInterval)
 
 
 __dataPanel = data_panel
 __isRunning = True
-__collectTime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-# threading.Thread(target=listenKeyboard).start()
-# threading.Thread(target=collect).start()
+threading.Thread(target=listenKeyboard).start()
+threading.Thread(target=collect).start()
 
-
-
-data_panel.collect(__collectTime)
 # kd.syn()
 # def printHelp():
 #     print('exit:退出')

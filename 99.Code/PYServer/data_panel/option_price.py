@@ -37,7 +37,7 @@ def get_index_price() -> Dict[str, Tuple]:
 
     result = {}
     for i in index_list:
-        price = all_price.loc[all_price['代码'] == i, '最新价'].values[0]
+        price = float(all_price.loc[all_price['代码'] == i, '最新价'].values[0])
         result[i] = (price, price)
     return result
 
@@ -45,10 +45,7 @@ def get_index_price() -> Dict[str, Tuple]:
 def get_etf_price() -> Dict[str, Tuple]:
     etf_list = [y for x in op.UNDERLYING if x['etf'] != [] for y in x['etf']]
     all_price = stock_crawler.get_price(etf_list)
-    print(all_price)
-    a = {
-        x: (all_price.loc[i, '买价位一'], all_price.loc[i, '卖价位一'])
+    return {
+        x: (float(all_price.loc[i, '买价位一']), float(all_price.loc[i, '卖价位一']))
         for i, x in enumerate(etf_list)
     }
-    print(a)
-    return {}
