@@ -2,7 +2,7 @@
 import os
 import time
 import pandas as pd
-from typing import Dict, Tuple
+from typing import Tuple, List, Dict
 
 from data_panel import option_info, option_price, render_data
 
@@ -24,11 +24,20 @@ __name: Tuple = (' 上证50 ', '沪深300 ', ' 创业板 ', ' 科创50 ')
 # 当前选中的标签
 __tabIndex: int = 0
 
+# 当前需要呈现的数据
+__renderData: Dict[str, pd.DataFrame] = {}
 
-def render(tabMovement: int = 0):
+# 标签列表
+__groups: List = []
+
+# 当前选中的分组
+__groupIndex: int = 0
+
+
+def render(tabMovement: int = 0, groupMovement: int = 0):
     """呈现数据面板
     """
-    global __tabs, __name, __tabIndex
+    global __tabs, __name, __tabIndex, __renderData, __groups, __groupIndex
     # 清空控制台输出
     if os.name == 'nt':
         os.system('cls')
@@ -38,39 +47,51 @@ def render(tabMovement: int = 0):
         raise Exception('操作系统异常')
 
     #
-    i = __tabIndex + tabMovement
-    if i < 0:
+    tabIndex = __tabIndex + tabMovement
+    if tabIndex < 0:
         __tabIndex = len(__tabs) - 1
-    elif i >= len(__tabs):
+    elif tabIndex >= len(__tabs):
         __tabIndex = 0
     else:
-        __tabIndex = i
+        __tabIndex = tabIndex
+    underlying = __tabs[__tabIndex]
+    # 获取tab对应的数据
+    if underlying not in __allRenderData.keys():
+        __allRenderData[underlying] = render_data.calculate(
+            underlying, __allPrice)
+    __renderData = __allRenderData[underlying]
+    __groups = __renderData['到期日'].drop_duplicates()
+
+    #
+    groupIndex = __groupIndex + groupMovement
+    if tabIndex < 0:
+        __groupIndex = len(__groups) - 1
+    elif groupIndex >= len(__groups):
+        __groupIndex = 0
+    else:
+        __groupIndex = groupIndex
 
     # 控制台尺寸
     terminalSize = os.get_terminal_size()
 
     # 输出tab bar
-    for i, tab in enumerate(__tabs):
-        tabBar = '| {} |' if i != __tabIndex else '\033[1m\033[7m\033[30m| {} |\033[0m'
+    for tabIndex, tab in enumerate(__tabs):
+        tabBar = '| {} |' if tabIndex != __tabIndex else '\033[1m\033[7m\033[30m| {} |\033[0m'
         print(tabBar.format(tab), end='')
     print('')
 
     # 输出tab bar name
-    for i, tab in enumerate(__name):
-        tabBar = '| {} |' if i != __tabIndex else '\033[1m\033[7m\033[30m| {} |\033[0m'
+    for tabIndex, tab in enumerate(__name):
+        tabBar = '| {} |' if tabIndex != __tabIndex else '\033[1m\033[7m\033[30m| {} |\033[0m'
         print(tabBar.format(tab), end='')
     print('')
 
     # 输出分割线
-    for i in range(terminalSize.columns):
+    for tabIndex in range(terminalSize.columns):
         print('^', end='')
     print('')
 
-    # 输出采集结果
-    underlying = __tabs[__tabIndex]
-    if underlying not in __allRenderData.keys():
-        __allRenderData[underlying] = render_data.calculate(underlying, __allPrice)
-    print(__allRenderData[underlying])
+    print(__renderData[__groups[__groupIndex]])
 
 
 def collect():
