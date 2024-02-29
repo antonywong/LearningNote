@@ -60,11 +60,11 @@ def render(tabMovement: int = 0, groupMovement: int = 0):
         __allRenderData[underlying] = render_data.calculate(
             underlying, __allPrice)
     __renderData = __allRenderData[underlying]
-    __groups = __renderData['到期日'].drop_duplicates()
+    __groups = __renderData['到期日'].drop_duplicates().values
 
     #
     groupIndex = __groupIndex + groupMovement
-    if tabIndex < 0:
+    if groupIndex < 0:
         __groupIndex = len(__groups) - 1
     elif groupIndex >= len(__groups):
         __groupIndex = 0
@@ -91,13 +91,24 @@ def render(tabMovement: int = 0, groupMovement: int = 0):
         print('^', end='')
     print('')
 
-    print(__renderData[__groups[__groupIndex]])
+    print(__renderData[__renderData['到期日'] == __groups[__groupIndex]])
+
+    # 输出分割线
+    for tabIndex in range(terminalSize.columns):
+        print('^', end='')
+    print('')
+
+    # 输出group
+    for groupIndex, group in enumerate(__groups):
+        groupBar = ' >>>{}<<< ' if groupIndex != __groupIndex else '\033[1m\033[7m\033[30m >>>{}<<< \033[0m'
+        print(groupBar.format(group), end='')
+    print('')
 
 
 def collect():
     global __collectTime, __allPrice, __allRenderData, __tabs, __tabIndex
     __collectTime = time.localtime()
-    print(time.strftime('%Y-%m-%d %H:%M:%S', __collectTime))
+    # print(time.strftime('%Y-%m-%d %H:%M:%S', __collectTime))
     current_min = __collectTime.tm_hour * 100 + __collectTime.tm_min
     if (__collectTime.tm_wday < 5 and
         (930 < current_min and current_min <= 1130
