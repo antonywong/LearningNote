@@ -8,12 +8,10 @@ from pynput import keyboard
 
 import config
 import data_panel
-from stock import monitorD, monitor05, tdx, kd, k05, kw, k30, high_low
-from crawler import etf_option, cffex_option
 
 
 def listenKeyboard():
-    """监听键盘键入，按q退出，按t测试
+    """监听键盘键入，按q退出
     """
     global __dataPanel, __isRunning
     with keyboard.Events() as events:
@@ -32,8 +30,6 @@ def listenKeyboard():
                         __dataPanel.render(0, -1)
                     elif event.key == keyboard.Key.down:
                         __dataPanel.render(0, 1)
-                    elif event.key == keyboard.KeyCode.from_char('t'):
-                        print("test")
                     else:
                         #print(event)
                         continue
@@ -67,42 +63,3 @@ if args[0] in ['prd', 'test']:
     threading.Thread(target=collect).start()
 else:
     print("test")
-
-# df = None
-# # 定义定时调用采集程序的函数
-# def run_collector():
-#     global df
-#     while True:
-#         message = []
-#         current_time = time.localtime()
-#         current_time_str = time.strftime('%Y-%m-%d %H:%M:%S', current_time)
-#         current_min = current_time.tm_hour * 100 + current_time.tm_min
-#         if current_time.tm_wday < 5 and (\
-#         930 < current_min and current_min <= 1130\
-#         or\
-#         1300 <= current_min and current_min < 1457\
-#         ):
-#             # 调用采集程序
-#             df = option_info.collect()
-#             # 保存当前分析结果
-#             option_info.record(df, current_time_str)
-#             # 输出分析结果
-#             message.extend(option_reminder.analyze(df))
-#             message.extend(option_deal.analyze(df))
-
-#             refresh_output(message)
-#         elif df is None:
-#             # 调用采集程序
-#             df = option_info.collect()
-#             # 输出分析结果
-#             message.extend(option_reminder.analyze(df))
-#             message.extend(option_deal.analyze(df))
-
-#             refresh_output(message)
-
-#         print(current_time_str, end="====", flush=True)
-#         # 等待一定时间后再次调用采集程序
-#         time.sleep(int(const.DICT["ANALYZE_RECORD_INTERVAL"]))
-
-
-# option_info.sync()

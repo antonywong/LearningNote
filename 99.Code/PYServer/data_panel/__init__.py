@@ -18,8 +18,8 @@ Dict[编号, (申买价, 申卖价)]
 __allRenderData: Dict[str, pd.DataFrame] = {}
 
 # 标签列表
-__tabs: Tuple = ('sh510050', 'sh510300', 'sz159915', 'sh588000')
-__name: Tuple = (' 上证50 ', '沪深300 ', ' 创业板 ', ' 科创50 ')
+__tabs: Tuple = ('sh588080', 'sh588000', 'sh510050', 'sh510300', 'sz159915')
+__name: Tuple = ('科创板50', ' 科创50 ', ' 上证50 ', '沪深300 ', ' 创业板 ')
 
 # 当前选中的标签
 __tabIndex: int = 0
@@ -60,7 +60,7 @@ def render(tabMovement: int = 0, groupMovement: int = 0):
         __allRenderData[underlying] = render_data.calculate(
             underlying, __allPrice)
     __renderData = __allRenderData[underlying]
-    __groups = __renderData['到期日'].drop_duplicates().values
+    __groups = __renderData['到期'].drop_duplicates().values
 
     #
     groupIndex = __groupIndex + groupMovement
@@ -91,7 +91,7 @@ def render(tabMovement: int = 0, groupMovement: int = 0):
         print('^', end='')
     print('')
 
-    print(__renderData[__renderData['到期日'] == __groups[__groupIndex]])
+    print(__renderData[__renderData['到期'] == __groups[__groupIndex]])
 
     # 输出分割线
     for tabIndex in range(terminalSize.columns):

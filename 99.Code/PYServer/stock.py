@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
-from stock import monitorD, monitor05, tdx, kd, k05, kw, k30, high_low
+from stock import info, monitorD, monitor05, tdx, kd, k05, kw, k30, high_low
 
-kd.syn()
+# kd.syn()
 def printHelp():
     print('exit:退出')
+    print('name:更新名称')
     print('m:监控五分钟K线')
     print('tdx:从通达信获取完整五分钟K线')
     print('kd:获取最新日K线')
@@ -24,6 +25,8 @@ while True:
         printHelp()
     elif com == "exit":
         break
+    elif com == "name":
+        info.syn()
     elif com == "m":
         monitor05.syn(False)
     elif com == "tdx":

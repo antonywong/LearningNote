@@ -55,6 +55,6 @@ def get_cffex_option_info_by_code(code: str) -> List[Tuple]:
 
 def update_database(data: List[Tuple]):
     sql = ["DELETE FROM OptionInfo"]
-    insert_sql = "INSERT INTO OptionInfo (Code,is_call,expire_day,underlying,strike_price) VALUES ('%s', %s, '%s', '%s',%s)"
+    insert_sql = "INSERT INTO OptionInfo (code,is_call,expire_day,underlying,strike_price) VALUES ('%s', %s, '%s', '%s',%s)"
     sql.extend([insert_sql % x for x in data])
     mssql.run(sql)
