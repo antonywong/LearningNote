@@ -4,6 +4,7 @@
 import time
 import sys
 import threading
+import win32gui
 from pynput import keyboard
 
 import config
@@ -13,9 +14,12 @@ import data_panel
 def listenKeyboard():
     """监听键盘键入，按q退出
     """
-    global __dataPanel, __isRunning
+    global __dataPanel, __isRunning, __currentWindowHandle
     with keyboard.Events() as events:
         for event in events:
+            if __currentWindowHandle != win32gui.GetForegroundWindow():
+                continue
+
             if isinstance(event, keyboard.Events.Release):
                 try:
                     if event.key == keyboard.KeyCode.from_char('q'):
@@ -52,14 +56,16 @@ def collect():
 
 __dataPanel = data_panel
 __isRunning = True
+__currentWindowHandle = win32gui.GetForegroundWindow()
 
 args = sys.argv[1:]
-if args[0] in ['prd']:
+if len(args) > 0 and args[0] in ['prd']:
     print('生成环境，更新基础数据...', end='')
     __dataPanel.update_option_info()
     print('DONE')
-if args[0] in ['prd', 'test']:
+if len(args) > 0 and args[0] in ['prd', 'test']:
     threading.Thread(target=listenKeyboard).start()
     threading.Thread(target=collect).start()
-else:
+if len(args) == 0:
+    threading.Thread(target=listenKeyboard).start()
     print("test")

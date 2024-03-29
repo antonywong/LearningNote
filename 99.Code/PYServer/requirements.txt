@@ -4,3 +4,4 @@ pymssql>=2.2.0
 pynput>=1.7.0
 bs4>=0.0.1
 lxml>=5.1.0
+pypiwin32>=0.0.0

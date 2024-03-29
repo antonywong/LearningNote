@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
-from stock import info, monitorD, monitor05, tdx, kd, k05, kw, k30, high_low
+from stock import info, monitor05, tdx, kd, k05, kw, k30, high_low
 
-# kd.syn()
+kd.syn()
 def printHelp():
     print('exit:退出')
     print('name:更新名称')
@@ -32,7 +32,7 @@ while True:
     elif com == "tdx":
         tdx.syn()
     elif com == "kd":
-        monitorD.syn(datetime.strftime(datetime.now(), "%Y-%m-%d"))
+        kd.syn()
     elif com == "k05":
         k05.syn()
     elif com == "hl":

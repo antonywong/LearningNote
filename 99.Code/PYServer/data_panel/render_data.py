@@ -22,7 +22,7 @@ def calculate(underlying, allPrice) -> pd.DataFrame:
         expire_day = ois[i]['expire_day']
 
         oi = {
-            "标的": int(underlying_price * 1000),
+            "标的": int(underlying_price * 10000),
             "到期": expire_day,
             "行权价": int(sp),
             "|看涨": "|看涨:",
@@ -39,20 +39,25 @@ def calculate(underlying, allPrice) -> pd.DataFrame:
 
         oi["↑平衡价"] = int(sp * 10) + oi['↑卖'] - oi['↓买']
         oi["↓平衡价"] = int(sp * 10) + oi['↑买'] - oi['↓卖']
-        oi["↑升水"] = oi["↑平衡价"] - oi['标的'] * 10
-        oi["↓升水"] = oi["↓平衡价"] - oi['标的'] * 10
+        oi["↑升水"] = oi["↑平衡价"] - oi['标的']
+        oi["↓升水"] = oi["↓平衡价"] - oi['标的']
 
         expire_date = datetime.strptime(expire_day, '%Y%m%d').date()
         today = datetime.today().date()
         delta_days = (expire_date - today).days + 1
         oi["剩余"] = delta_days
 
+        oi["↑收益"] = round(0, 1)
+        oi["↓收益"] = round((oi["↓升水"] - oi["标的"] * 0.00008 * 2 - 2.6 * 3) / (oi["标的"] + 1000 + oi['↓卖']) * 100, 4)
+
         oi["↑年化升水"] = round(oi["↑升水"] / delta_days * 365, 1)
+        oi["↑年化收益"] = round(oi["↑收益"] / delta_days * 365, 2)
         oi["↓年化升水"] = round(oi["↓升水"] / delta_days * 365, 1)
+        oi["↓年化收益"] = round(oi["↓收益"] / delta_days * 365, 2)
 
         result.append(oi)
-    return pd.DataFrame(result, columns=["标的", "到期","剩余", "行权价",
+    return pd.DataFrame(result, columns=["标的", "到期", "剩余", "行权价",
         "|看涨", "↑买", "↑卖",
         "|看跌", "↓买", "↓卖",
-        "|合成↑:","↑平衡价", "↑升水", "↑年化升水",
-        "|合成↓:","↓平衡价", "↓升水", "↓年化升水"])
+        "|合成↑:","↑平衡价", "↑升水", "↑年化升水", "↑收益", "↑年化收益",
+        "|合成↓:","↓平衡价", "↓升水", "↓年化升水", "↓收益", "↓年化收益"])

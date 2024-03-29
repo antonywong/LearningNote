@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
 from typing import List
 
 from dal import mssql
@@ -24,7 +23,8 @@ def getStockInfo(codes):
     update_sql = "UPDATE Stock SET name='%s' WHERE code='%s';"
     sqls = []
     for i, row in df.iterrows():
-        sqls.append(update_sql % (row['证券简称'], codes[i]))
-        print("更新名称--", codes[i], "--", row['证券简称'])
+        if row['证券简称']:
+            sqls.append(update_sql % (row['证券简称'], codes[i]))
+            print("更新名称--", codes[i], "--", row['证券简称'])
 
     mssql.run(sqls)
