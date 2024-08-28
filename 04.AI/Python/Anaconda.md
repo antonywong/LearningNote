@@ -3,13 +3,13 @@
 
 
 ## 软件源
-conda config –-show channels
+conda config --show channels
 ### 切换为中国科技大学源
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
 ### 搜索时显示通道地址
-conda config –-set show_channel_urls yes
+conda config --set show_channel_urls yes
 
 
 ## 包管理

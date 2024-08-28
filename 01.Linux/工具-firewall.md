@@ -29,5 +29,5 @@ firewall-cmd --add-forward-port=port=53389:proto=tcp:toaddr=172.16.100.6:toport=
 firewall-cmd --remove-forward-port=port=50022:proto=tcp:toaddr=127.0.0.1:toport=22 --permanent
 firewall-cmd --query-forward-port=port=53306:proto=tcp
 
-firewall-cmd --remove-forward-port=port=51433:proto=tcp:toport=1433:toaddr=172.16.100.7 --permanent
-firewall-cmd --add-forward-port=port=51433:proto=tcp:toport=3306:toaddr=172.16.100.62 --permanent
+firewall-cmd --remove-forward-port=port=58821:proto=tcp:toport=58821:toaddr=172.16.100.7 --permanent
+firewall-cmd --add-forward-port=port=58821:proto=tcp:toport=58821:toaddr=172.16.100.7 --permanent
