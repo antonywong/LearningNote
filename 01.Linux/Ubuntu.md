@@ -1,32 +1,3 @@
-## APT源
-sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
-### 中科大的源
-sudo echo "
-deb http://mirrors.ustc.edu.cn/ubuntu/ jammy main restricted universe multiverse
-deb http://mirrors.ustc.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
-deb http://mirrors.ustc.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
-deb http://mirrors.ustc.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
-deb http://mirrors.ustc.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
-deb-src http://mirrors.ustc.edu.cn/ubuntu/ jammy main restricted universe multiverse
-deb-src http://mirrors.ustc.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
-deb-src http://mirrors.ustc.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
-deb-src http://mirrors.ustc.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
-deb-src http://mirrors.ustc.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
-" > /etc/apt/sources.list
-### 阿里的源
-sudo echo "
-deb http://mirrors.aliyun.com/ubuntu/ jammy main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ jammy-security main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ jammy-updates main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ jammy-proposed main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ jammy-backports main restricted universe multiverse
-deb-src http://mirrors.aliyun.com/ubuntu/ jammy main restricted universe multiverse
-deb-src http://mirrors.aliyun.com/ubuntu/ jammy-security main restricted universe multiverse
-deb-src http://mirrors.aliyun.com/ubuntu/ jammy-updates main restricted universe multiverse
-deb-src http://mirrors.aliyun.com/ubuntu/ jammy-proposed main restricted universe multiverse
-deb-src http://mirrors.aliyun.com/ubuntu/ jammy-backports main restricted universe multiverse
-" > /etc/apt/sources.list
-
 ## docker
 ### 安装必要组件
 sudo apt install ca-certificates curl gnupg lsb-release

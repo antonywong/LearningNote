@@ -16,3 +16,4 @@ pm2 start /home/wangyuanjie/cloudflared-freebsd --watch -- --config  /home/wangy
 #!/bin/bash
 
 /home/wangyuanjie/cloudflared-freebsd --config  /home/wangyuanjie/.cloudflared/config.yml tunnel run 45cef9f1-9505-48ce-ae72-04bbea446726
+

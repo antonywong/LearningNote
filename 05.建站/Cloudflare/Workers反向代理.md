@@ -1,8 +1,8 @@
-#### cloudflare 主菜单 -> Workers -> 创建服务
+## cloudflare 主菜单 -> Workers -> 创建服务
 
-#### 创建 Workers -> 取名字 -> 创建
+## 创建 Workers -> 取名字 -> 创建
 
-#### 编辑JS代码
+## 编辑JS代码
 ```
 addEventListener(
     "fetch", event => {
@@ -17,7 +17,7 @@ addEventListener(
 )
 ```
 
-#### 增加路由 -> 选择区域
+## 增加路由 -> 选择区域
 ```
 www.baidu.com/*
 ```

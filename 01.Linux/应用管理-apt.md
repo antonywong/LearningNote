@@ -1,3 +1,13 @@
+## APT源
+sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
+### 中科大的源
+curl -fsSL https://mirrors.ustc.edu.cn/repogen/conf/debian-https-4-bookworm -o /etc/apt/sources.list
+### pve源
+https://mirrors.ustc.edu.cn/proxmox/debian/pve
+wget https://mirrors.ustc.edu.cn/proxmox/debian/proxmox-release-bookworm.gpg -O /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
+### ceph源
+https://mirrors.ustc.edu.cn/proxmox/debian/ceph-quincy
+
 ## APT
 普通安装：apt-get install softname1 softname2...  
 重新安装：apt-get --reinstall install softname1 softname2...  

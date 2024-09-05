@@ -20,7 +20,7 @@ sda2    8192M   [SWAP]
 sda3    rest    /
 ```
 ### 查看分区表
- fdisk -l
+fdisk -l
 
 ## 格式化分区
 mkfs.fat -F 32 /dev/sda1
@@ -35,6 +35,9 @@ mount /dev/sda3 /mnt
 vim /etc/pacman.d/mirrorlist
 ### 中科大源
 Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch
+### 更新
+pacman -Su
+pacman -S archlinux-keyring
 
 ## 安装base package, Linux kernel and firmware for common hardware
 pacstrap -K /mnt base linux linux-firmware
@@ -65,17 +68,17 @@ echo "LANG=zh_CN.UTF-8" >> /etc/locale.conf
 echo "LANG=en_US.UTF-8" >> /etc/locale.conf
 
 ## 生成hostname文件:
-echo "wangyj-TestLinux-arch" >> /etc/hostname
+echo "wangyj-arch" >> /etc/hostname
 
 ## 设置网络
 ip link
 nano /etc/systemd/network/20-wired.network
 ```
 [Match]
-Name=ens33
+Name=enp3s0
 
 [Network]
-Address=10.10.11.21/23
+Address=10.10.10.12/23
 Gateway=10.10.10.1
 DNS=192.168.0.1
 ```
