@@ -35,9 +35,6 @@ mount /dev/sda3 /mnt
 vim /etc/pacman.d/mirrorlist
 ### 中科大源
 Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch
-### 更新
-pacman -Su
-pacman -S archlinux-keyring
 
 ## 安装base package, Linux kernel and firmware for common hardware
 pacstrap -K /mnt base linux linux-firmware
@@ -78,8 +75,8 @@ nano /etc/systemd/network/20-wired.network
 Name=enp3s0
 
 [Network]
-Address=10.10.10.12/23
-Gateway=10.10.10.1
+Address=192.168.11.100/24
+Gateway=192.168.11.1
 DNS=192.168.0.1
 ```
 

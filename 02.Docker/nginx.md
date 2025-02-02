@@ -1,5 +1,3 @@
-docker search nginx
-
 docker pull nginx
 
 sudo mkdir /mnt/md0/nginx

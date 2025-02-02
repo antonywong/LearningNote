@@ -1,6 +1,6 @@
 # 获取Global API Key
  
-访问 https://dash.cloudflare.com/profile在页面下方找到 Global API Key，点击右侧的 View 查看 Key，并保存下来 ，在页面下方找到 Global API Key，点击右侧的 View 查看 Key，并保存下来
+访问 https://dash.cloudflare.com/profile 在页面下方找到 Global API Key，点击右侧的 View 查看 Key，并保存下来 ，在页面下方找到 Global API Key，点击右侧的 View 查看 Key，并保存下来
 
 # 设置用于 DDNS 解析的二级域名，流量不经过CDN(云朵变灰)
  

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from crawler import option
 
 UNDERLYINGS = ["sh510050","sh510300","sh510500"]
 

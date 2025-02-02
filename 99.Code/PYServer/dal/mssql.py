@@ -10,7 +10,7 @@ def query(sql):
 def queryAll(sql):
     result = []
     c = config.mssqlConnStr
-    with pymssql.connect(c[0], c[1], c[2], c[3]) as conn:
+    with pymssql.connect(c[0], c[1], c[2], c[3], tds_version="7.0") as conn:
         with conn.cursor(as_dict=True) as cursor:   # 数据存放到字典中
             cursor.execute(sql)
             for row in cursor:
@@ -24,9 +24,9 @@ def run(*sqls):
         sqls = [sqls[0]]
 
     c = config.mssqlConnStr
-    with pymssql.connect(c[0], c[1], c[2], c[3]) as conn:
+    with pymssql.connect(c[0], c[1], c[2], c[3], tds_version="7.0") as conn:
         with conn.cursor() as cursor:
             for sql in sqls[0]:
-                #print(sql)
+                print(sql)
                 cursor.execute(sql)
             conn.commit()

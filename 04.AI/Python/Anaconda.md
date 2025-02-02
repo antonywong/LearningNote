@@ -27,6 +27,7 @@ conda clean -t      //删除tar包
 conda env list
 conda create -n your_env_name python=x.x
 ### 激活
+conda init cmd.exe
 conda activate your_env_name
 conda deactivate
 

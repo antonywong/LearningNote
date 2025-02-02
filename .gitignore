@@ -64,5 +64,6 @@ __pycache__/
 
 .vs
 .vscode
+.venv
 bin/
 obj/

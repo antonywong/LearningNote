@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from option import common
 
 UNDERLYING = [
     # 上证50
@@ -50,3 +51,6 @@ OPTION_COMMISSION = 3
 OPTION_MARGIN = 5000
 
 WATCHLIST_COUNT = 6
+
+def update_etf_contract():
+    return common.update_etf_contract()
