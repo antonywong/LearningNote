@@ -1,15 +1,14 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import dal
+from typing import List
+from datetime import datetime
+from decimal import Decimal
+from stock import _core, akshare_collecter
 
+COLLECTER = akshare_collecter
 
-def insert(Ks, kType = "D"):
-    if len(Ks) != 0:
-        sql = "INSERT INTO StockK%s (code,day,open,high,low,close,volume) VALUES " % kType
-        for k in Ks:
-            sql += "('%s','%s',%s,%s,%s,%s,%s)," % (k[0], k[1], k[2], k[3], k[4], k[5], k[6])
-        sql = sql.strip(",") + ";"
+def collect(codes: List[str] = [], scale: int = 240, datalen: int = 48):
+    return COLLECTER.collect(codes, scale, datalen)
 
-        dal.run(sql)
-    print("INSERT %d" % len(Ks))
+def volatility(code: str) -> Decimal:
+    return _core.volatility(code)

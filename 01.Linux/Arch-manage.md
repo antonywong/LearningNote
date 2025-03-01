@@ -110,7 +110,7 @@ sudo systemctl enable gdm
 
 # VMware-Tools
 sudo pacman -S open-vm-tools
-
+sudo systemctl enable vmtoolsd
 
 
 # VNC

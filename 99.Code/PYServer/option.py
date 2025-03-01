@@ -51,7 +51,7 @@ def collect():
         __dataPanel.collect()
         __dataPanel.render()
         # 等待一定时间后再次调用采集程序
-        time.sleep(config.analyzeRecordInterval)
+        time.sleep(config.collectionInterval)
 
 
 __dataPanel = data_panel

@@ -9,28 +9,16 @@ conda env list
 conda create -n autogpt
 conda activate autogpt
 
-### 设置国内pip源
-
-pip config set global.index-url <https://pypi.mirrors.ustc.edu.cn/simple>
-
-### 安装依赖
-
-pip install -r requirements.txt
-
 ### 从模板创建环境配置
-
 cp .env.template .env
 
 ### 修改配置文件
-
 OPENAI_API_KEY=your-openai-api-key
 
 ### 启动（GPT3.5 ONLY Mode）
-
 python -m autogpt --gpt3only
 
 ## 日常启动
-
 conda activate autogpt
 e:
 cd E:\~GitHub\Auto-GPT-0.2.0

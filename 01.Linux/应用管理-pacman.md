@@ -3,7 +3,7 @@
 ## 修改pacman源
 sudo nano /etc/pacman.d/mirrorlist
 ### 中科大源
-Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch
+Server = https://mirrors.tuna.tsinghua.edu.cn/archlinux/$repo/os/$arch
 ### manjaro自动更换
 sudo pacman-mirrors -c China
 
@@ -64,7 +64,7 @@ Include = /etc/pacman.d/mirrorlist
 ```
 [archlinuxcn]
 SigLevel = Optional TrustAll
-Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch
+Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/$arch
 ```
 ### 安装 archlinuxcn-keyring 包导入 GPG key。
 sudo pacman -S archlinuxcn-keyring

@@ -42,6 +42,8 @@ docker rm cloudflared-client-vmess-60023 -f
 docker run -d --name cloudflared-client-vmess-60023 -p 60023:60023 \
     --restart=always --network toshiba --network-alias cloudflared-client-vmess-60023 \
     cloudflare/cloudflared access tcp --hostname ser00vmess.hemuduegg.eu.org --url 0.0.0.0:60023
+docker run -d --name cloudflared-client-vmess-60023 -p 60023:60023 --restart=always \
+    cloudflare/cloudflared access tcp --hostname ser00vmess.hemuduegg.eu.org --url 0.0.0.0:60023
 
 # v2fly
 sudo mkdir /mnt/md0/v2fly

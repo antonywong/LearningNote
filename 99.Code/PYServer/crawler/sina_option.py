@@ -6,36 +6,21 @@ from bs4 import BeautifulSoup
 from typing import Dict, List, Tuple
 
 headers = {
-    "Accept":
-    "*/*",
-    "Accept-Encoding":
-    "gzip, deflate, br",
-    "Accept-Language":
-    "zh-CN,zh;q=0.9,en;q=0.8",
-    "Cache-Control":
-    "no-cache",
-    "Connection":
-    "keep-alive",
-    "Host":
-    "hq.sinajs.cn",
-    "Pragma":
-    "no-cache",
-    "Referer":
-    "https://stock.finance.sina.com.cn/",
-    "sec-ch-ua":
-    '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
-    "sec-ch-ua-mobile":
-    "?0",
-    "sec-ch-ua-platform":
-    '"Windows"',
-    "Sec-Fetch-Dest":
-    "script",
-    "Sec-Fetch-Mode":
-    "no-cors",
-    "Sec-Fetch-Site":
-    "cross-site",
-    "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "Host": "hq.sinajs.cn",
+    "Pragma": "no-cache",
+    "Referer": "https://stock.finance.sina.com.cn/",
+    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Sec-Fetch-Dest": "script",
+    "Sec-Fetch-Mode": "no-cors",
+    "Sec-Fetch-Site": "cross-site",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
 }
 
 
@@ -123,8 +108,7 @@ def option_sse_spot_price_sina(codes: List[str]) -> Dict[str, pd.DataFrame]:
                 continue
 
             code = data_text[data_text.find('CON_OP_') + 7:data_text.find('=')]
-            data_list = data_text[data_text.find('"') +
-                                  1:data_text.rfind('"')].split(",")
+            data_list = data_text[data_text.find('"') + 1:data_text.rfind('"')].split(",")
             field_list = [
                 "买量",
                 "买价",
@@ -170,10 +154,42 @@ def option_sse_spot_price_sina(codes: List[str]) -> Dict[str, pd.DataFrame]:
                 "成交量",
                 "成交额",
             ]
-            data_df = pd.DataFrame(list(zip(field_list, data_list)),
-                                   columns=["字段", "值"])
+            data_df = pd.DataFrame(list(zip(field_list, data_list)), columns=["字段", "值"])
             result[code] = data_df
     return result
+
+
+def option_sse_daily_sina(symbol: str) -> pd.DataFrame:
+    url = "https://stock.finance.sina.com.cn/futures/api/jsonp_v2.php//StockOptionDaylineService.getSymbolInfo"
+    params = {"symbol": f"CON_OP_{symbol}"}
+    
+    nheaders = {
+        "accept": "*/*",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+        "cache-control": "no-cache",
+        "pragma": "no-cache",
+        "referer": "https://stock.finance.sina.com.cn/option/quotes.html",
+        "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "script",
+        "sec-fetch-mode": "no-cors",
+        "sec-fetch-site": "same-origin",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/97.0.4692.71 Safari/537.36",
+    }
+    data_text = requests.get(url, params=params, headers=nheaders).text
+    data_json = json.loads(data_text[data_text.find("(") + 1 : data_text.rfind(")")])
+    temp_df = pd.DataFrame(data_json)
+    temp_df.columns = ["日期", "开盘", "最高", "最低", "收盘", "成交量"]
+    temp_df["日期"] = pd.to_datetime(temp_df["日期"], errors="coerce").dt.date
+    temp_df["开盘"] = pd.to_numeric(temp_df["开盘"], errors="coerce")
+    temp_df["最高"] = pd.to_numeric(temp_df["最高"], errors="coerce")
+    temp_df["最低"] = pd.to_numeric(temp_df["最低"], errors="coerce")
+    temp_df["收盘"] = pd.to_numeric(temp_df["收盘"], errors="coerce")
+    temp_df["成交量"] = pd.to_numeric(temp_df["成交量"], errors="coerce")
+    return temp_df
 
 
 def option_cffex_sz50_list_sina() -> List[str]:

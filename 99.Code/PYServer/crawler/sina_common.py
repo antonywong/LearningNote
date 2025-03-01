@@ -50,6 +50,8 @@ def get_stock_spot(codes: List[str]) -> pd.DataFrame:
             x[x.find('"') + 1:x.rfind('"')].split(",")[:-1]
             for x in res.split(";\n") if x
         ]
+        if len(res_data) == 32:
+            res_data.append("00")
         result.extend(res_data)
 
     field_list = [

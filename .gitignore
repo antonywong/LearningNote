@@ -67,3 +67,7 @@ __pycache__/
 .venv
 bin/
 obj/
+build/
+dist/
+*.spec
+*.whl

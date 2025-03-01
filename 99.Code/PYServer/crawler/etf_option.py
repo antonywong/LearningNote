@@ -30,29 +30,10 @@ def get_price(codes: List[str]) -> Dict[str, pd.DataFrame]:
     """
     # print(f'crawler.etf_option.get_price...{len(codes)}...', end='')
     return sina_option.option_sse_spot_price_sina(codes)
-    
 
 
-# def get_spot(etf_option_codes: List[str]) -> pd.DataFrame:
-#     all_price = get_price(etf_option_codes)
-#     #print(all_price)
-
-#     result = []
-#     option_info = mssql.queryAll(f"SELECT underlying, expire_day, strike_price, is_call, code FROM ArbitrageETFOptionInfo ORDER BY underlying, expire_day, strike_price, is_call")
-#     for i in range(0, len(option_info), 2):
-#         call = all_price[option_info[i + 1]["code"]]
-#         put = all_price[option_info[i]["code"]]
-#         result.append({
-#             "标的": option_info[i]["underlying"],
-#             "到期日": option_info[i]['expire_day'],
-#             "行权价": option_info[i]['strike_price'],
-#             "看涨合约-代码": option_info[i + 1]["code"],
-#             "看涨合约-买价": float(call.loc[1, "值"]) * 1000,
-#             "看涨合约-卖价": float(call.loc[3, "值"]) * 1000,
-#             "看涨合约-持仓量": int(call.loc[5, "值"]),
-#             "看跌合约-代码": option_info[i]["code"],
-#             "看跌合约-买价": float(put.loc[1, "值"]) * 1000,
-#             "看跌合约-卖价": float(put.loc[3, "值"]) * 1000
-#         })
-
-#     return pd.DataFrame(result)
+def get_daily(code: str) -> pd.DataFrame:
+    """期权日频率数据
+    """
+    # print(f'crawler.cffex_option.get_daily...', end='')
+    return sina_option.option_sse_daily_sina(code)

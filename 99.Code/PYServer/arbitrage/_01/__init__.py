@@ -1,58 +1,65 @@
 # -*- coding: utf-8 -*-
-import math
+# 合成策略升贴水套利
+
+import json
+from typing import List
+from decimal import Decimal
+import option
 from dal import mssql
-from crawler import etf_option as etf_op_crawler
-import pandas as pd
+from config import trading_day
 
-COMMISSION = 2.6
-MARGIN_RITE = 1.15
+def run(underlyings: List[str], expire_months: List[str], is_test: bool = False):  
+    if not is_test and not trading_day.is_trading_time():
+        return
 
-def collect(underlying, expire_day):
-    select_sql = "SELECT code, is_call, strike_price FROM OptionInfo WHERE underlying='%s' AND expire_day='%s' ORDER BY strike_price, is_call DESC"
-    contracts = mssql.queryAll(select_sql % (underlying, expire_day))
+    if len(underlyings) == 0:
+        underlyings = [y for x in option.UNDERLYING for y in x['etf']]
+    
+    if len(expire_months) == 0:
+        print("无过期月")
+        return
 
-    contract_codes = [row["code"] for row in contracts]
-    all_price = etf_op_crawler.get_price(contract_codes)
-    # print(all_price)
+    for underlying in underlyings:
+        for expire_month in expire_months:
+            # 最新买卖价
+            select_sql = "SELECT top(1) time,underlying_price,data FROM OptionPrice WHERE underlying='%s' AND expire_month='%s'"
+            option_price = mssql.queryAll(select_sql % (underlying, expire_month))[0]
+            price_data = json.loads(option_price['data'])
 
-    for row in contracts:
-        row["strike_price"] = int(row["strike_price"])
-        row["卖价一"] = int(float(all_price[row["code"]].loc[20, "值"]) * 10000)
-        row["卖量一"] = int(all_price[row["code"]].loc[21, "值"])
-        row["买价一"] = int(float(all_price[row["code"]].loc[22, "值"]) * 10000)
-        row["买量一"] = int(all_price[row["code"]].loc[23, "值"])
-    # df = pd.DataFrame(contracts)
-    # print(df)
+            # T型报价
+            select_sql = "SELECT strike_price,cCode,pCode FROM VOptionT WHERE underlying='%s' AND expire_month='%s' AND is_standard=1 ORDER BY strike_price"
+            option_t = mssql.queryAll(select_sql % (underlying, expire_month))
 
-    price = []
-    for i in range(0, len(contracts), 2):
-        row1= contracts[i]
-        row2= contracts[i + 1]
-        p = { "strike_price": row1["strike_price"] }
-        p['合成多'] = row1['strike_price'] * 10 + row1['卖价一'] - row2['买价一']
-        p['合成空'] = row2['strike_price'] * 10 + row1['买价一'] - row2['卖价一']
-        p['组合数量'] = min(row1["卖量一"], row1["买量一"], row2["卖量一"], row2["买量一"])
-        price.append(p)
-    # df2 = pd.DataFrame(price)
-    # print(df2)
+            for row in option_t:
+               strike_price = row["strike_price"]
+               c_price = price_data[row["cCode"]]
+               p_price = price_data[row["pCode"]]
+               row["long_c_price"] = c_price[0][0]
+               row["long_s_price"] = p_price[1][0]
+               row["short_c_price"] = c_price[1][0]
+               row["short_s_price"] = p_price[0][0]
+               row["long"] = (strike_price + Decimal(row["long_c_price"]) - Decimal(row["long_s_price"])).quantize(Decimal('0.00000'))
+               row["short"] = (strike_price + Decimal(row["short_c_price"]) - Decimal(row["short_s_price"] )).quantize(Decimal('0.00000'))
 
-    group = []
-    for long in price:
-        long_price = long['合成多']
-        long_strike_price = long['strike_price']
-        for short in price:
-            short_price = short['合成空']
-            profit = short_price - long_price - COMMISSION * 6
-            if profit <= 0:
-                continue
+            result = {}
+            for l_row in option_t:
+                for s_row in option_t:                    
+                    l_strike_price = (l_row["strike_price"] * 10000).quantize(Decimal('0'))
+                    s_strike_price = (s_row["strike_price"] * 10000).quantize(Decimal('0'))                    
+                    long_c_price = round(l_row["long_c_price"] * 10000)
+                    long_s_price = round(l_row["long_s_price"] * 10000)
+                    short_c_price = round(s_row["short_c_price"] * 10000)
+                    short_s_price = round(s_row["short_s_price"] * 10000)
+                    if long_c_price == 0 or long_s_price == 0 or short_c_price == 0 or short_s_price == 0:
+                        continue
+                    long = (l_row["long"] * 10000).quantize(Decimal('0'))
+                    short = (s_row["short"] * 10000).quantize(Decimal('0'))
+                    earn = short - long - option.OPTION_COMMISSION * 2
+                    if earn > 0 and (underlying not in result.keys() or result[underlying]["earn"] < earn):
+                        result[underlying] = {
+                            "earn": earn,
+                            "log": f"★合成套利 {option_price['time']} {underlying} 合成多{l_strike_price:>5}(+{long_c_price}-{long_s_price})={long:<6}\t合成空{s_strike_price:>5}(+{short_c_price}-{short_s_price})={short:<6}\t盈利:{earn}"
+                        }
 
-            short_strike_price = short['strike_price']
-            margin = abs(long_strike_price - short_strike_price) * 20 * MARGIN_RITE
-            g = { "策略": "L%s:S%s" % (long_strike_price, short_strike_price), "收益": profit, "收益率": profit / margin * 100 }
-            group.append(g)
-    group = sorted(group, key = lambda x: x['收益率'])
-    if len(group) == 0:
-        print("无")
-    else:
-        df3 = pd.DataFrame(group)
-        print(df3)
+            for underlying in result.keys():
+                print(result[underlying]["log"])

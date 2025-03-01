@@ -34,7 +34,7 @@ mount /dev/sda3 /mnt
 ## 修改pacman源
 vim /etc/pacman.d/mirrorlist
 ### 中科大源
-Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch
+Server = https://mirrors.tuna.tsinghua.edu.cn/archlinux/$repo/os/$arch
 
 ## 安装base package, Linux kernel and firmware for common hardware
 pacstrap -K /mnt base linux linux-firmware
@@ -65,18 +65,18 @@ echo "LANG=zh_CN.UTF-8" >> /etc/locale.conf
 echo "LANG=en_US.UTF-8" >> /etc/locale.conf
 
 ## 生成hostname文件:
-echo "wangyj-arch" >> /etc/hostname
+echo "wangyj-pc-arch" >> /etc/hostname
 
 ## 设置网络
 ip link
 nano /etc/systemd/network/20-wired.network
 ```
 [Match]
-Name=enp3s0
+Name=ens33
 
 [Network]
-Address=192.168.11.100/24
-Gateway=192.168.11.1
+Address=10.10.10.119/23
+Gateway=10.10.10.1
 DNS=192.168.0.1
 ```
 

@@ -27,6 +27,6 @@ def run(*sqls):
     with pymssql.connect(c[0], c[1], c[2], c[3], tds_version="7.0") as conn:
         with conn.cursor() as cursor:
             for sql in sqls[0]:
-                print(sql)
+                #print(sql)
                 cursor.execute(sql)
             conn.commit()
