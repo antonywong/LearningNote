@@ -21,8 +21,6 @@ OPTION_STRIKE_COMMISSION = 1
 OPTION_MARGIN = 5000
 OPTION_MARGIN_RITE = 1.1
 
-WATCHLIST_COUNT = 6
-
 STOCK_COLLECTER = stock
 OPTION_COLLECTER = akshare_collecter
 
@@ -42,15 +40,15 @@ def collect(underlyings: List[str] = [], expire_months: List[str] = []):
 
     # 盘后数据更新
     if not trading_day.is_after_trading_updated():
-        OPTION_COLLECTER.get_daily(underlyings, expire_months)
+        OPTION_COLLECTER.get_daily([], expire_months)
         stock_codes = [y for x in UNDERLYING for y in x["etf"]]
         stock_codes.extend([x["index"]for x in UNDERLYING])
         STOCK_COLLECTER.collect(stock_codes)
         trading_day.update_after_trading()
 
     if trading_day.is_trading_time():
-        OPTION_COLLECTER.collect(underlyings, expire_months)        
-        stock_codes = list(set(GET_UNDERLYING_INDEX(u) for u in underlyings))
+        OPTION_COLLECTER.collect([], expire_months)
+        stock_codes = list(set(GET_UNDERLYING_INDEX(u) for u in underlyings)) if len(underlyings) > 0 else [u["index"] for u in UNDERLYING]
         STOCK_COLLECTER.collect(stock_codes, 5)
 
 
@@ -58,5 +56,5 @@ def calculate_index():
     return _core.calculate_index()
 
 
-def get_strike_price_etf(underlying_price: float):
-    return _core.get_strike_price_etf(underlying_price)
+def get_strike_price_etf(underlying_price: float, need_secondary: bool = False):
+    return _core.get_strike_price_etf(underlying_price, need_secondary)

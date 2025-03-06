@@ -6,9 +6,17 @@ mssqlConnStr = ("192.168.2.42", "sa", "sql@0512", "CH_Stock")
 # 自动采集数据的时间间隔（秒）
 collectionInterval = 30
 
-# 企业微信-期权提醒机器人Key
-weComRemindBotKey = '7870c91a-8824-485a-8ce2-8d388ab871d4'
-
 sqliteFile = "Z:/StockTool.db"
 
 tdxDir = "E:/GreenSoftware/中金证券/"
+
+
+## trading_day缓存
+# 缓存-当前的最后一个交易日
+CACHE_LAST_TRADING_DAY = { "day": None, "pre_trading_updated": None, "after_trading_updated": None }
+# 缓存-当前的下一个交易日
+CACHE_NEXT_TRADING_DAY = { "day": None, "pre_trading_updated": None, "after_trading_updated": None }
+# 缓存-当前的ETF期权到期日
+CACHE_ETF_OPTION_EXPIRE_DAY = []
+
+

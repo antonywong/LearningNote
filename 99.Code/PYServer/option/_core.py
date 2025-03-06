@@ -135,14 +135,14 @@ def bsm_implied_volatility(underlying_price: float, strike_price: float, days: f
         if vega < precision:
             return precision
         diff = option_price - price
-        if (abs(diff) < precision):
+        if abs(diff) < precision:
             return sigma
         sigma = sigma + diff / vega
 
     return sigma
 
 
-def get_strike_price_etf(underlying_price: Decimal) -> Decimal:
+def get_strike_price_etf(underlying_price: Decimal, need_secondary: bool) -> Decimal:
     underlying_price += Decimal("0.001")
     multi = Decimal("100.000000")
     if underlying_price < 3:
@@ -151,5 +151,13 @@ def get_strike_price_etf(underlying_price: Decimal) -> Decimal:
         interval = 10
     else:
         interval = 25
-    strike_price = (underlying_price * multi / interval).quantize(Decimal("0")) * interval / multi
-    return strike_price
+    strike_price = (underlying_price * multi / interval).quantize(Decimal("0")) * interval
+    if need_secondary:
+        secondary_strike_price = None
+        if underlying_price < strike_price:
+            secondary_strike_price = strike_price - interval
+        elif underlying_price > strike_price:
+            secondary_strike_price = strike_price + interval
+        return strike_price / multi, secondary_strike_price / multi
+    else:
+        return strike_price / multi

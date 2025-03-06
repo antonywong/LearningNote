@@ -66,7 +66,8 @@ sudo usermod -aG docker $USER
 newgrp docker
 
 ## 启动服务
-sudo systemctl enable --now docker
+sudo systemctl enable docker
+sudo systemctl start docker
 systemctl status docker
 
 ## 更换目录位置

@@ -14,3 +14,7 @@ git config --global https.proxy socks5://10.10.10.18:10808
 
 ## 证书
 C:\Users\home\.ssh\
+
+## 命令
+### 推送到主分支
+git push origin master

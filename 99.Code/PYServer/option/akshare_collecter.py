@@ -33,7 +33,7 @@ def update_etf_contract():
     insert_codes = list(codes - old_codes)
 
     # 插入新合约
-    if (len(insert_codes) > 0):
+    if len(insert_codes) > 0:
         data = [(row["code"],
                  row["underlying"],
                  row["is_call"],
@@ -50,7 +50,7 @@ def update_etf_contract():
     
     # 更新旧合约
     update_codes = list(codes - set(insert_codes))
-    if (len(update_codes) > 0):
+    if len(update_codes) > 0:
         data = [(row["expire_day"][6:8],
                  all_price[row["code"]].loc[7, "值"],
                  0 if all_price[row["code"]].loc[37, "值"][-1] == "A" else 1,
@@ -67,12 +67,12 @@ def collect(underlyings: List[str], expire_months: List[str]):
     now = datetime.now()
     select_sql = "SELECT code,underlying,is_call,strike_price,expire_month,expire_day FROM OptionCode WHERE expire_month"
     # 到期月筛选
-    if (len(expire_months) == 0):
+    if len(expire_months) == 0:
         select_sql += ">='" + f"{now.year}{now.month:02d}'"[2:]
     else:
         select_sql += " in ('" + "','".join(expire_months) + "')"
     # 标的物筛选
-    if (len(underlyings) > 0):
+    if len(underlyings) > 0:
         select_sql += " AND underlying in ('" + "','".join(underlyings) + "')"
 
     options = mssql.queryAll(select_sql)
@@ -114,12 +114,12 @@ def get_daily(underlyings: List[str], expire_months: List[str]):
     now = datetime.now()
     select_sql = "SELECT code FROM OptionCode WHERE expire_month"
     # 到期月筛选
-    if (len(expire_months) == 0):
+    if len(expire_months) == 0:
         select_sql += ">='" + f"{now.year}{now.month:02d}'"[2:]
     else:
         select_sql += " in ('" + "','".join(expire_months) + "')"
     # 标的物筛选
-    if (len(underlyings) > 0):
+    if len(underlyings) > 0:
         select_sql += " AND underlying in ('" + "','".join(underlyings) + "')"
 
     codes = [row["code"] for row in mssql.queryAll(select_sql)]

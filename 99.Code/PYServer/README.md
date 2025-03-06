@@ -15,5 +15,6 @@ python 99.Code/PYServer/option_arbitrage_01.py
 
 ## 打包
 pyinstaller --onefile 99.Code/PYServer/option_collect.py
-
+pyinstaller --onefile 99.Code/PYServer/option_delta_monitor.py
+pyinstaller --onefile 99.Code/PYServer/option_iv_monitor.py
 
