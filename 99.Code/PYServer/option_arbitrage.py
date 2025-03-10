@@ -2,6 +2,7 @@
 
 import time
 from datetime import datetime
+from decimal import Decimal
 import config
 import stock
 import option
@@ -29,11 +30,12 @@ def run():
 # stock.volatility("sz399006", datetime.now(), datetime.now())
 # stock.collect(["sz399006"], 5, 60)
 # option.calculate_index()
+# option.get_seller_holding_cost(False, Decimal("2.16"), Decimal("2.15"))
 # akshare_collecter.get_daily([], [])
 # arbitrage._01.run(underlyings=[], expire_months=[trading_day.get_etf_option_expire_day()[0][0:4]], is_test=True)
 # arbitrage._02.run(underlyings=[], expire_months=[trading_day.get_etf_option_expire_day()[0][0:4]], is_test=True)
 # arbitrage._03.run(underlyings=["sz159915"], expire_months=[trading_day.get_etf_option_expire_day()[0][0:4]])
-# arbitrage._05.run()
+# arbitrage._05.run("sz159915", trading_day.get_etf_option_expire_day()[0][0:4])
 # mail.send_message("1411038526@qq.com", "测试", "测试")
 
 __isRunning = True

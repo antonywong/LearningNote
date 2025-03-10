@@ -18,3 +18,12 @@ pyinstaller --onefile 99.Code/PYServer/option_collect.py
 pyinstaller --onefile 99.Code/PYServer/option_delta_monitor.py
 pyinstaller --onefile 99.Code/PYServer/option_iv_monitor.py
 
+
+## docker
+docker build -t ***stock-server*** .
+
+# 运行容器（按需设置环境变量）
+docker run -d  --name ***stock-service*** \
+  -e MSSQL_HOST=mssql \
+  -e MSSQL_PASSWORD=your_sa_password \
+  ***stock-server***

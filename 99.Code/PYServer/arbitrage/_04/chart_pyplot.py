@@ -34,7 +34,7 @@ def update(frame):
         c_lot = (t["cLot"] if t["cLot"] else 0) + (t["cLotTemp"] if t["cLotTemp"] else 0)
         p_lot = (t["pLot"] if t["pLot"] else 0) + (t["pLotTemp"] if t["pLotTemp"] else 0)
         delta += c_delta * c_lot + p_delta * p_lot
-    if trading_day.is_trading_time() and abs(delta) > 2000:
+    if trading_day.is_trading_time() and abs(delta) > 3000:
         mail.send_message("1411038526@qq.com", "组合delta预警", f"组合delta：{delta}")
 
     ax.set_title(f'[{strike_price}]=[volume:{round(volume_increase * 100, 2)}%]=[delta:{delta}]')
@@ -43,8 +43,8 @@ def update(frame):
     line.set_data(x, y)
     
     # 自动调整坐标轴范围
-    ax.relim()        # 重新计算数据范围
-    ax.autoscale_view()  # 自动调整坐标轴
+    ax.relim()          # 重新计算数据范围
+    ax.autoscale_view() # 自动调整坐标轴
 
     return line,
 

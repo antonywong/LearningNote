@@ -6,3 +6,5 @@ pymssql
 bs4
 pyinstaller
 matplotlib
+flask
+flask-cors

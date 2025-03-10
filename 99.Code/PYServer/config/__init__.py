@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
 
+import os
+
+
 # SQL Server连接字符串参数
-mssqlConnStr = ("192.168.2.42", "sa", "sql@0512", "CH_Stock")
+mssqlConnStr = (
+    os.getenv("MSSQL_HOST", "192.168.2.42"),
+    os.getenv("MSSQL_USER", "sa"),
+    os.getenv("MSSQL_PASSWORD", "sql@0512"),
+    os.getenv("MSSQL_DB", "CH_Stock")
+    )
 
 # 自动采集数据的时间间隔（秒）
 collectionInterval = 30
 
 sqliteFile = "Z:/StockTool.db"
-
-tdxDir = "E:/GreenSoftware/中金证券/"
 
 
 ## trading_day缓存

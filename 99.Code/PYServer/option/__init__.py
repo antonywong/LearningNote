@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import List
+from decimal import Decimal
 import stock
 from config import trading_day
 from option import _core, akshare_collecter
@@ -19,7 +20,7 @@ STACK_COMMISSION_RATE = 0.00008
 OPTION_COMMISSION = 2
 OPTION_STRIKE_COMMISSION = 1
 OPTION_MARGIN = 5000
-OPTION_MARGIN_RITE = 1.1
+OPTION_MARGIN_RATE = 1.1
 
 STOCK_COLLECTER = stock
 OPTION_COLLECTER = akshare_collecter
@@ -56,5 +57,13 @@ def calculate_index():
     return _core.calculate_index()
 
 
+def get_option_code(underlying: str, expire_month: str) ->  List[str]:
+    return _core.get_option_code(underlying, expire_month)
+
+
 def get_strike_price_etf(underlying_price: float, need_secondary: bool = False):
     return _core.get_strike_price_etf(underlying_price, need_secondary)
+
+
+def get_seller_holding_cost(is_call: bool, underlying_price: Decimal, strike_price: Decimal) -> Decimal:
+    return _core.get_seller_holding_cost(is_call, underlying_price, strike_price)

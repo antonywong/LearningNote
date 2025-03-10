@@ -12,7 +12,7 @@ def run(underlying: str, expire_month: str):
 
 def get_new_data(underlying: str, expire_month: str):
     # 最新买卖价
-    select_sql = "SELECT top(2500) time,underlying,underlying_price,data FROM OptionPrice WHERE underlying='%s' AND expire_month='%s' AND calculated=1 AND DATEPART(HOUR,time)*100+DATEPART(MINUTE,time)<1457"
+    select_sql = "SELECT top(3500) time,underlying,underlying_price,data FROM OptionPrice WHERE underlying='%s' AND expire_month='%s' AND calculated=1 AND DATEPART(HOUR,time)*100+DATEPART(MINUTE,time)<1457"
     option_prices = mssql.queryAll(select_sql % (underlying, expire_month))
 
     # T型报价

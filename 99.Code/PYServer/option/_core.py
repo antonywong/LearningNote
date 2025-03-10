@@ -14,6 +14,7 @@ import stock
 BS_RISK_FREE_RATE = 0.01
 BS_UNDERLYING_DIVIDEND_RATE = 0.0
 
+
 def calculate_index():
     select_sql = "SELECT id,CAST(time AS date) AS time,underlying,underlying_price,data FROM OptionPrice WHERE calculated=0"
     option_prices = mssql.queryAll(select_sql)
@@ -44,20 +45,6 @@ def calculate_index():
     
         insert_sql = ["UPDATE OptionPrice SET data='%s',calculated=1 WHERE id=%s" % (json.dumps(data, separators=(',', ':')), option_price["id"])]
         mssql.run(insert_sql)
-
-def __calculate_index(underlying_price: float, strike_price: float, days: float, option_price: float, is_call: bool) -> List:
-    value = (underlying_price - strike_price) * (1 if is_call else -1)
-    time_value = option_price - value
-    iv = bsm_implied_volatility(underlying_price, strike_price, days, option_price, is_call)
-    T = days / 360.0
-    delta = bsm_delta(underlying_price, strike_price, BS_RISK_FREE_RATE, BS_UNDERLYING_DIVIDEND_RATE, T, iv, is_call).item()
-    gamma = bsm_gamma(underlying_price, strike_price, BS_RISK_FREE_RATE, BS_UNDERLYING_DIVIDEND_RATE, T, iv).item()
-    vega = bsm_vega(underlying_price, strike_price, BS_RISK_FREE_RATE, BS_UNDERLYING_DIVIDEND_RATE, T, iv).item()
-    theta = bsm_theta(underlying_price, strike_price, BS_RISK_FREE_RATE, BS_UNDERLYING_DIVIDEND_RATE, T, iv, is_call).item()
-    rho = bsm_rho(underlying_price, strike_price, BS_RISK_FREE_RATE, BS_UNDERLYING_DIVIDEND_RATE, T, iv, is_call).item()
-    return [option_price, round(value, 6), round(time_value, 6), round(iv, 6), None, round(delta, 6), round(gamma, 6), round(vega, 6), round(theta, 6), round(rho, 6)]
-
-
 """计算d1
 :param S: 标的资产价格
 :param X: 行权价
@@ -73,6 +60,17 @@ Returns:
         [0:最近成交价, 1:内在价值, 2:时间价值, 3:隐含波动率, 4:历史波动率, 5:delta, 6:gamma, 7:vega, 8:theta, 9:rho],
         [0:盘口平均价, 1:内在价值, 2:时间价值, 3:隐含波动率, 4:历史波动率, 5:delta, 6:gamma, 7:vega, 8:theta, 9:rho],
 """
+def __calculate_index(underlying_price: float, strike_price: float, days: float, option_price: float, is_call: bool) -> List:
+    value = (underlying_price - strike_price) * (1 if is_call else -1)
+    time_value = option_price - value
+    iv = bsm_implied_volatility(underlying_price, strike_price, days, option_price, is_call)
+    T = days / 360.0
+    delta = bsm_delta(underlying_price, strike_price, BS_RISK_FREE_RATE, BS_UNDERLYING_DIVIDEND_RATE, T, iv, is_call).item()
+    gamma = bsm_gamma(underlying_price, strike_price, BS_RISK_FREE_RATE, BS_UNDERLYING_DIVIDEND_RATE, T, iv).item()
+    vega = bsm_vega(underlying_price, strike_price, BS_RISK_FREE_RATE, BS_UNDERLYING_DIVIDEND_RATE, T, iv).item()
+    theta = bsm_theta(underlying_price, strike_price, BS_RISK_FREE_RATE, BS_UNDERLYING_DIVIDEND_RATE, T, iv, is_call).item()
+    rho = bsm_rho(underlying_price, strike_price, BS_RISK_FREE_RATE, BS_UNDERLYING_DIVIDEND_RATE, T, iv, is_call).item()
+    return [option_price, round(value, 6), round(time_value, 6), round(iv, 6), None, round(delta, 6), round(gamma, 6), round(vega, 6), round(theta, 6), round(rho, 6)]
 
 def bsm_d1(S: float, K: float, r: float, q: float, T: float, sigma: float):
     d1 = (np.log(S / K) + (r - q + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
@@ -142,6 +140,15 @@ def bsm_implied_volatility(underlying_price: float, strike_price: float, days: f
     return sigma
 
 
+def get_option_code(underlying: str, expire_month: str) ->  List[str]:
+    if not underlying or not expire_month:
+        return []
+
+    select_sql = "SELECT code FROM OptionCode WHERE underlying='%s' AND expire_month='%s' AND is_standard=1"
+    codes = mssql.queryAll(select_sql % (underlying, expire_month))
+    return [row["code"] for row in codes]
+
+
 def get_strike_price_etf(underlying_price: Decimal, need_secondary: bool) -> Decimal:
     underlying_price += Decimal("0.001")
     multi = Decimal("100.000000")
@@ -161,3 +168,17 @@ def get_strike_price_etf(underlying_price: Decimal, need_secondary: bool) -> Dec
         return strike_price / multi, secondary_strike_price / multi
     else:
         return strike_price / multi
+
+
+def get_seller_holding_cost(is_call: bool, underlying_price: Decimal, strike_price: Decimal) -> Decimal:
+    """
+    认购=Max(12%×标的价-认购期权虚值, 7%×标的价)  认购期权虚值=Max(行权价-标的价, 0)
+    认沽=Max(12%×标的价-认沽期权虚值, 7%×行权价)  认沽期权虚值=Max(标的价-行权价, 0)"""
+    if is_call:
+        cost = max(Decimal("0.12") * underlying_price - max(strike_price - underlying_price, Decimal("0")), Decimal("0.07") * underlying_price)
+    else:
+        cost = max(Decimal("0.12") * underlying_price - max(underlying_price - strike_price, Decimal("0")), Decimal("0.07") * strike_price)
+    cost = cost * Decimal("10000") * Decimal(option.OPTION_MARGIN_RATE)
+    return cost.quantize(Decimal("0.00"))
+
+
