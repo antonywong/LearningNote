@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime, timedelta
-from typing import List
 import config
 from dal import mssql
 
+START_HOUR = 9
+START_MINUTE = 15
 
-def __get_last_trading_day():
-    now = (datetime.now() - timedelta(hours=9, minutes=30)).strftime("%Y-%m-%d")
+def __get_last_trading_day() -> dict:
+    global START_HOUR, START_MINUTE
+    now = (datetime.now() - timedelta(hours=START_HOUR, minutes=START_MINUTE)).strftime("%Y-%m-%d")
 
     if not config.CACHE_NEXT_TRADING_DAY["day"] or config.CACHE_NEXT_TRADING_DAY["day"] <= now:
         """填充新的TradingDay"""
@@ -36,18 +38,20 @@ ORDER BY day"""
     return config.CACHE_LAST_TRADING_DAY
 
 
-def get_last() -> datetime:
+def get_last() -> str:
     last_day = __get_last_trading_day()['day']
-    return datetime.strptime(last_day, "%Y-%m-%d")
+    return last_day
 
 
 def is_pre_trading_updated() -> bool:
-    return __get_last_trading_day()['pre_trading_updated'] == 1
+    return __get_last_trading_day()['pre_trading_updated']
 
 
 def is_after_trading_updated() -> bool:
+    global START_HOUR, START_MINUTE
+    start_minute = START_HOUR * 100 + START_MINUTE
     minute = datetime.now().hour * 100 + datetime.now().minute
-    return __get_last_trading_day()['after_trading_updated'] == 1 or minute < 1530
+    return __get_last_trading_day()['after_trading_updated'] or (start_minute < minute < 1530)
 
 
 def update_pre_trading() -> bool:
@@ -70,15 +74,4 @@ def is_trading_time() -> bool:
     last_day = __get_last_trading_day()["day"]
     minute = now.hour * 100 + now.minute
     return last_day == today and (930 <= minute and minute < 1130 or 1300 <= minute and minute <= 1500)
-
-
-def get_etf_option_expire_day() -> List[str]:
-    last_day = __get_last_trading_day()["day"].replace('-', '')
-
-    if len(config.CACHE_ETF_OPTION_EXPIRE_DAY) == 0 or config.CACHE_ETF_OPTION_EXPIRE_DAY[0] < last_day:
-        sql = "SELECT DISTINCT expire_month+expire_day AS day FROM OptionCode where '20'+expire_month+expire_day >= FORMAT(GETDATE(),'yyyyMMdd') ORDER BY day"
-        config.CACHE_ETF_OPTION_EXPIRE_DAY = [row["day"] for row in mssql.queryAll(sql)]
-
-    return config.CACHE_ETF_OPTION_EXPIRE_DAY
-
 

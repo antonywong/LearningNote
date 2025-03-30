@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>实时图表</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.7.16/vue.min.js" integrity="sha512-Wx8niGbPNCD87mSuF0sBRytwW2+2ZFr7HwVDF8krCb3egstCc4oQfig+/cfg2OHd82KcUlOYxlSDAqdHqK5TCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.6.0/echarts.min.js" integrity="sha512-XSmbX3mhrD2ix5fXPTRQb2FwK22sRMVQTpBP2ac8hX7Dh/605hA2QDegVWiAvZPiXIxOV0CbkmUjGionDpbCmw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        .chart-container {
+            width: 100%;
+            height: 1000px;
+            margin: 2px auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <realtime-chart></realtime-chart>
+    </div>
+
+    <script>
+        // 注册全局组件
+        Vue.component('realtime-chart', {
+            template: `
+                <div ref="chartContainer" class="chart-container"></div>
+            `,
+            data() {
+                return {
+                    chartInstance: null,
+                    updateInterval: null
+                }
+            },
+            methods: {
+                initChart() {
+                    this.chartInstance = echarts.init(this.$refs.chartContainer);
+                    this.chartInstance.setOption({
+                        title: { text: '正在加载数据...' },
+                        tooltip: { trigger: 'axis' },
+                        grid: {  // 新增grid配置
+                            left: '0',    // 减少左侧留白
+                            right: '1%',   // 减少右侧留白
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: [],
+                            boundaryGap: false  // 消除X轴两端空白
+                        },
+                        yAxis: { 
+                            type: 'value',
+                            scale: true,  // 允许缩放
+                            min: 'dataMin',  // 自适应最小值
+                            max: 'dataMax'   // 自适应最大值
+                        },
+                        series: [{
+                            name: '数据',
+                            type: 'line',
+                            symbol: 'none',
+                            data: [],
+                            smooth: true  // 可选：使曲线更平滑
+                        }]
+                    });
+                },
+                async fetchData() {
+                    try {
+                        const response = await fetch('http://10.10.10.17:5000/v1/api/_04/echarts?underlying=sz159915');
+                        var res_json = await response.json();
+                        console.log(res_json[0]["x"])
+                        if (res_json[0]["msg"]) {
+                            this.chartInstance.setOption({
+                                title: { text: res_json[0]["msg"] }
+                            });
+                        } else {
+                            // 更新图表配置
+                            this.chartInstance.setOption({
+                                title: {  text: res_json[0]["title"] + " - [数据量" + res_json[0]["x"].length.toString() + "]" },
+                                xAxis: { data: res_json[0]["x"] },
+                                series: [{ data: res_json[0]["y"] }]
+                            });
+                        }
+                    } catch (error) {
+                        console.error('数据获取失败:', error);
+                    }
+                },
+                handleResize() {
+                    this.chartInstance && this.chartInstance.resize();
+                }
+            },
+            mounted() {
+                this.initChart();
+                this.fetchData();
+                
+                this.updateInterval = setInterval(() => {
+                    this.fetchData();
+                }, 9000);
+                
+                window.addEventListener('resize', this.handleResize);
+            },
+            beforeDestroy() {
+                clearInterval(this.updateInterval);
+                window.removeEventListener('resize', this.handleResize);
+                this.chartInstance && this.chartInstance.dispose();
+            }
+        });
+
+        // 创建Vue实例
+        new Vue({
+            el: '#app'
+        });
+    </script>
+</body>
+</html>

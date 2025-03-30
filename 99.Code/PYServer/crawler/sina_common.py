@@ -87,7 +87,6 @@ def get_stock_spot(codes: List[str]) -> pd.DataFrame:
         "卖价位五",
         "行情日期",
         "行情时间",
-        "停牌状态",
     ]
 
-    return pd.DataFrame(result, columns=field_list)
+    return pd.DataFrame(result[0:32], columns=field_list)

@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 # 日内波动率套利
 
-import json
 from typing import List, Dict
 from decimal import Decimal
-from datetime import datetime
 import option
 from dal import mssql
 from config import trading_day
+
 
 def run(underlyings: List[str], expire_months: List[str], is_test: bool = False):
     if not is_test and not trading_day.is_trading_time():
@@ -22,7 +21,7 @@ def run(underlyings: List[str], expire_months: List[str], is_test: bool = False)
 
     for underlying in underlyings:
         for expire_month in expire_months:
-            option_price = get_option_price(underlying, expire_month)
+            option_price = option.get_latest_option_price(underlying, expire_month)
             option_t = cal(underlying, expire_month, option_price)
             result = []
             for t_row in option_t:
@@ -36,19 +35,10 @@ def run(underlyings: List[str], expire_months: List[str], is_test: bool = False)
                 print(l) 
 
 
-def get_option_price(underlying: str, expire_month: str, time: datetime = None) -> dict:
-    # 最新买卖价
-    select_sql = "SELECT top(1) time,underlying_price,data FROM OptionPrice WHERE underlying='%s' AND expire_month='%s' AND calculated=1"
-    if time:
-        select_sql += " AND time <= '%s'" % datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
-    select_sql += " ORDER BY time DESC"
-    return mssql.queryAll(select_sql % (underlying, expire_month))[0]
-
-
 def cal(underlying: str, expire_month: str, option_price: dict) -> dict:
     underlying_price = option_price['underlying_price']
-    main_strike_price = option.get_strike_price_etf(underlying_price)
-    price_data =  json.loads(option_price['data'])
+    main_strike_price = option.get_strike_price_etf(Decimal(underlying_price))
+    price_data = option_price['data']
 
     # T型报价
     select_sql = "SELECT strike_price,cCode,pCode,cLot,pLot,cLotTemp,pLotTemp FROM VOptionTLot WHERE underlying='%s' AND expire_month='%s' AND is_standard=1 ORDER BY strike_price"

@@ -4,6 +4,7 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
 from dal import mssql
+import option
 import arbitrage._03
 
 class ui_tkinter:
@@ -116,7 +117,7 @@ class ui_tkinter:
 
     def schedule_refresh(self):
         """定时刷新机制"""
-        self.option_price = arbitrage._03.get_option_price(self.underlying, self.expire_month)
+        self.option_price = option.get_latest_option_price(self.underlying, self.expire_month)
         self.refresh_data()
         self.root.after(30000, self.schedule_refresh)  # 30秒刷新
 

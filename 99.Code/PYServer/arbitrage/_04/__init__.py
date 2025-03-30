@@ -2,41 +2,37 @@
 # 隐含波动率统计
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import option
 from dal import mssql
-import arbitrage._04.chart_pyplot as chart_pyplot
 
-def run(underlying: str, expire_month: str): 
-    chart_pyplot.run(underlying, expire_month)
-
-def get_new_data(underlying: str, expire_month: str):
+def get_new_data(underlying: str, expire_month: str, start_time: datetime):
     # 最新买卖价
-    select_sql = "SELECT top(3500) time,underlying,underlying_price,data FROM OptionPrice WHERE underlying='%s' AND expire_month='%s' AND calculated=1 AND DATEPART(HOUR,time)*100+DATEPART(MINUTE,time)<1457"
+    select_sql = "SELECT top(16000) time,underlying,underlying_price,data FROM OptionPrice WHERE underlying='%s' AND expire_month='%s' AND DATEPART(HOUR,time)*100+DATEPART(MINUTE,time)<1457"
+    if start_time:
+        select_sql += " AND '%s:00'<=time" % start_time.strftime("%Y-%m-%d %H:%M")
     option_prices = mssql.queryAll(select_sql % (underlying, expire_month))
 
     # T型报价
+    option_t = option.get_option_t(underlying, expire_month)
     strike_price, secondary_strike_price = option.get_strike_price_etf(option_prices[0]['underlying_price'], True)
-    select_sql = "SELECT strike_price,cCode,pCode FROM VOptionT WHERE underlying='%s' AND expire_month='%s' AND is_standard=1 AND (strike_price='%s'" % (underlying, expire_month, strike_price)
-    if secondary_strike_price:
-        select_sql += " OR strike_price='%s'" % secondary_strike_price
-    option_ts = mssql.queryAll(select_sql + ")")
-    codes = []
-    for t in option_ts:
-        codes.extend([t["cCode"], t["pCode"]])
+    codes = [code for t in option_t if t["strike_price"] in (strike_price, secondary_strike_price) for code in (t["cCode"], t["pCode"])]
 
     price_data = [{"time": option_price['time'], "data": json.loads(option_price['data'])} for option_price in option_prices]
     main_price_data = {}
     for price in price_data:
         minute = datetime.strptime(price["time"].strftime("%Y%m%d%H%M"), "%Y%m%d%H%M")
+        if minute.minute % 2 == 1:
+           minute = minute - timedelta(minutes=1)
 
         if minute not in main_price_data.keys():
             main_price_data[minute] = []
         for code in codes:
-            main_price_data[minute].extend([price['data'][code][2][3], price['data'][code][3][3]])
+            if code in price['data'].keys():
+                main_price_data[minute].extend([price['data'][code][3][3]])
 
     main_price_ivs = [{"time": key, "ivs": [iv for iv in main_price_data[key] if iv > 0.0001]} for key in main_price_data.keys()]
-    main_price_iv = [{"time": ivs["time"], "iv": sum(ivs["ivs"]) / len(ivs["ivs"])} for ivs in main_price_ivs]
+    main_price_iv = [{"time": ivs["time"], "iv": sum(ivs["ivs"]) / len(ivs["ivs"])} for ivs in main_price_ivs if ivs["ivs"]]
     main_price_iv = sorted(main_price_iv, key=lambda x: x["time"], reverse=False)
 
     # 更新数据集

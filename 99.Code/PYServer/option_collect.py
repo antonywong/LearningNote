@@ -3,8 +3,7 @@
 import time
 from datetime import datetime
 import config
-from config import trading_day
-import option
+import option.akshare_collecter
 
 def collect():
     """定义定时调用采集程序的函数
@@ -13,7 +12,7 @@ def collect():
     while __isRunning:
         now  = datetime.now()
         try:
-            option.collect(underlyings=["sz159915"], expire_months=[trading_day.get_etf_option_expire_day()[0][0:4]])
+            option.akshare_collecter.collect("http://10.10.10.17:5000", ["sz159915"], [option.get_etf_option_expire_day()[0][0:4]])
             print(now, end="开始,耗时(微秒):")
             print((datetime.now() - now).microseconds)
         except Exception as e:

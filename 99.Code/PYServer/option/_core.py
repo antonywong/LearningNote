@@ -3,48 +3,52 @@
 import json
 import numpy as np
 from scipy import stats
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 from scipy import stats
 from typing import List
 from dal import mssql
-import option
+import config
+from config import trading_day
+import option, option.akshare_collecter
 import stock
+
 
 BS_RISK_FREE_RATE = 0.01
 BS_UNDERLYING_DIVIDEND_RATE = 0.0
 
 
-def calculate_index():
-    select_sql = "SELECT id,CAST(time AS date) AS time,underlying,underlying_price,data FROM OptionPrice WHERE calculated=0"
-    option_prices = mssql.queryAll(select_sql)
-    for option_price in option_prices:
-        v = float(stock.volatility(option.GET_UNDERLYING_INDEX(option_price["underlying"]))) # 历史波动率
-        underlying_price = option_price["underlying_price"]
-        data = json.loads(option_price["data"])
-        codes = data.keys()
-        select_sql = "SELECT code,is_call,strike_price,expire_month,expire_day FROM OptionCode WHERE code IN ('%s')" % "','".join(codes)        
-        option_codes = mssql.queryAll(select_sql)
+def recalculate_index():
+    select_sql = "SELECT id,time,underlying,underlying_price,expire_month,data FROM OptionPrice WHERE calculated=0"
+    for price_data in mssql.queryAll(select_sql):
+        time = price_data["time"]
+        underlying = price_data["underlying"]
+        underlying_price = price_data["underlying_price"]
+        expire_month =  price_data["expire_month"]
+        data = json.loads(price_data["data"])
+        v = float(stock.volatility(option.GET_UNDERLYING_INDEX(underlying))) # 历史波动率
+        codes = sorted(data.keys())
+        sorted_data = {}
+        option_codes = option.get_option_info(codes)
+        days = (date(int("20" + expire_month[0:2]), int(expire_month[2:4]), int(option_codes[0]["expire_day"])) - time.date()).days + 1
         contracts = {row["code"]: row for row in option_codes}
-        time = datetime.strptime(option_price["time"], "%Y-%m-%d")
         for code in codes:
-            is_call = contracts[code]["is_call"]
-            expire_month = contracts[code]["expire_month"]
-            days = (datetime(int("20" + expire_month[0:2]), int(expire_month[2:4]), int(contracts[code]["expire_day"])) - time).days + 1
-            # print(code)
-            # data[code][2] 以最新成交价计算各类指标
-            price = data[code][2][0]
-            data[code][2] = __calculate_index(float(underlying_price), float(contracts[code]["strike_price"]), days, price, is_call)
-            data[code][2][4] = v # 历史波动率
-            # data[code][3] 以买一卖一平均价计算各类指标
-            if len(data[code]) <= 3:
-                data[code].append([])
-            avg = round((data[code][0][0] + data[code][1][0]) / 2.0, 6)
-            data[code][3] = __calculate_index(float(underlying_price), float(contracts[code]["strike_price"]), days, avg, is_call)
-            data[code][3][4] = v # 历史波动率
-    
-        insert_sql = ["UPDATE OptionPrice SET data='%s',calculated=1 WHERE id=%s" % (json.dumps(data, separators=(',', ':')), option_price["id"])]
+            c = contracts[code]
+            d = data[code]
+            # d[2] 以最新成交价计算各类指标
+            #d[2] = _core.calculate_index(float(underlying_price), float(c["strike_price"]), days, d[2][0], c["is_call"])
+            #d[2][4] = v # 历史波动率
+            data[code][2] = data[code][2][0:1]
+            # d[3] 以买一卖一平均价计算各类指标
+            d[3] = calculate_index(float(underlying_price), float(c["strike_price"]), days, d[3][0], c["is_call"])
+            d[3][4] = v # 历史波动率
+            sorted_data[code] = d
+        
+        para = (json.dumps(sorted_data, separators=(',', ':')), price_data["id"])
+        insert_sql = ["UPDATE OptionPrice SET data='%s', calculated=1 WHERE id='%s'" % para]
         mssql.run(insert_sql)
+
+
 """计算d1
 :param S: 标的资产价格
 :param X: 行权价
@@ -60,7 +64,7 @@ Returns:
         [0:最近成交价, 1:内在价值, 2:时间价值, 3:隐含波动率, 4:历史波动率, 5:delta, 6:gamma, 7:vega, 8:theta, 9:rho],
         [0:盘口平均价, 1:内在价值, 2:时间价值, 3:隐含波动率, 4:历史波动率, 5:delta, 6:gamma, 7:vega, 8:theta, 9:rho],
 """
-def __calculate_index(underlying_price: float, strike_price: float, days: float, option_price: float, is_call: bool) -> List:
+def calculate_index(underlying_price: float, strike_price: float, days: float, option_price: float, is_call: bool) -> List:
     value = (underlying_price - strike_price) * (1 if is_call else -1)
     time_value = option_price - value
     iv = bsm_implied_volatility(underlying_price, strike_price, days, option_price, is_call)
@@ -140,16 +144,55 @@ def bsm_implied_volatility(underlying_price: float, strike_price: float, days: f
     return sigma
 
 
-def get_option_code(underlying: str, expire_month: str) ->  List[str]:
+def get_etf_option_expire_day() -> List[str]:
+    """获取ETF期权合约到期日"""
+    last_day = trading_day.get_last()[2:].replace("-", "")
+    if len(config.CACHE_ETF_OPTION_EXPIRE_DAY) == 0 or config.CACHE_ETF_OPTION_EXPIRE_DAY[0] < last_day:
+        sql = "SELECT DISTINCT expire_month+expire_day AS day FROM OptionCode where '20'+expire_month+expire_day >= FORMAT(GETDATE(),'yyyyMMdd') ORDER BY day"
+        config.CACHE_ETF_OPTION_EXPIRE_DAY = [row["day"] for row in mssql.queryAll(sql)]
+
+    return config.CACHE_ETF_OPTION_EXPIRE_DAY
+
+
+def get_option_t(underlying: str, expire_month: str) -> list:
+    """获取合约T型报价（标准合约）"""
     if not underlying or not expire_month:
         return []
+    
+    last_trading_day = trading_day.get_last()
+    if not config.CACHE_OPTION_T["time"] or config.CACHE_OPTION_T["time"] != last_trading_day:
+        config.CACHE_OPTION_T["time"] = last_trading_day
+        config.CACHE_OPTION_T["t"] = {}
 
-    select_sql = "SELECT code FROM OptionCode WHERE underlying='%s' AND expire_month='%s' AND is_standard=1"
-    codes = mssql.queryAll(select_sql % (underlying, expire_month))
-    return [row["code"] for row in codes]
+    cache_key = (underlying, expire_month)
+    if cache_key not in config.CACHE_OPTION_T["t"].keys():
+        select_sql = "SELECT strike_price,cCode,pCode FROM VOptionT WHERE underlying='%s' AND expire_month='%s' AND is_standard=1 ORDER BY strike_price"
+        config.CACHE_OPTION_T["t"][cache_key] = mssql.queryAll(select_sql % cache_key)
+    
+    return config.CACHE_OPTION_T["t"][cache_key]
+
+
+def get_option_info(codes: list = []) -> list:
+    """获取合约信息"""
+    last_trading_day = trading_day.get_last()
+    if not config.CACHE_OPTION_INFO["time"] or config.CACHE_OPTION_INFO["time"] != last_trading_day:        
+        # 盘前数据更新
+        if not trading_day.is_pre_trading_updated():
+            option.akshare_collecter.update_etf_contract()
+            trading_day.update_pre_trading()
+
+        config.CACHE_OPTION_INFO["time"] = last_trading_day
+        select_sql = "SELECT code,underlying,is_call,strike_price,expire_month,expire_day,is_standard FROM OptionCode WHERE expire_month>='%s'"
+        config.CACHE_OPTION_INFO["info"] = mssql.queryAll(select_sql % option.get_etf_option_expire_day()[0][0:4])
+    
+    if codes:
+        return [info for info in config.CACHE_OPTION_INFO["info"] if info["code"] in codes]
+    else:
+        return config.CACHE_OPTION_INFO["info"]
 
 
 def get_strike_price_etf(underlying_price: Decimal, need_secondary: bool) -> Decimal:
+    """计算ETF当前价对应的行权价"""
     underlying_price += Decimal("0.001")
     multi = Decimal("100.000000")
     if underlying_price < 3:
@@ -171,14 +214,34 @@ def get_strike_price_etf(underlying_price: Decimal, need_secondary: bool) -> Dec
 
 
 def get_seller_holding_cost(is_call: bool, underlying_price: Decimal, strike_price: Decimal) -> Decimal:
-    """
+    """获取持仓成本
     认购=Max(12%×标的价-认购期权虚值, 7%×标的价)  认购期权虚值=Max(行权价-标的价, 0)
     认沽=Max(12%×标的价-认沽期权虚值, 7%×行权价)  认沽期权虚值=Max(标的价-行权价, 0)"""
     if is_call:
-        cost = max(Decimal("0.12") * underlying_price - max(strike_price - underlying_price, Decimal("0")), Decimal("0.07") * underlying_price)
+        cost = max(
+            Decimal("0.12") * underlying_price - max(strike_price - underlying_price, Decimal("0")),
+            Decimal("0.07") * underlying_price)
     else:
-        cost = max(Decimal("0.12") * underlying_price - max(underlying_price - strike_price, Decimal("0")), Decimal("0.07") * strike_price)
+        cost = max(
+            Decimal("0.12") * underlying_price - max(underlying_price - strike_price, Decimal("0")),
+            Decimal("0.07") * strike_price)
     cost = cost * Decimal("10000") * Decimal(option.OPTION_MARGIN_RATE)
     return cost.quantize(Decimal("0.00"))
 
 
+def get_latest_option_price(underlying: str, expire_month: str) -> dict:
+    """获取当前数据库最新的合约价格数据（标准合约）"""
+    cache_key = (underlying, expire_month)
+    if underlying and expire_month and cache_key not in config.CACHE_LATEST_OPTION_PRICE.keys():
+        select_sql = "SELECT top(1) time,underlying_price,data FROM OptionPrice WHERE underlying='%s' AND expire_month='%s' ORDER BY time DESC"
+        option_prices = mssql.queryAll(select_sql % cache_key)
+        if len(option_prices) > 0:
+            price = option_prices[0]
+            config.CACHE_LATEST_OPTION_PRICE[cache_key] = {
+                "time": price["time"],
+                "underlying": underlying,
+                "underlying_price": price["underlying_price"],
+                "expire_month": expire_month,
+                "data": json.loads(price["data"])
+            }
+    return config.CACHE_LATEST_OPTION_PRICE[cache_key]

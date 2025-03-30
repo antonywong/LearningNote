@@ -1,13 +1,76 @@
 # # -*- coding: utf-8 -*-
 
 import time
+import requests
 import json
 from datetime import datetime
 from typing import List
 from config import trading_day
 from dal import mssql
 from crawler import etf_option as etf_op_crawler, stock as stock_crawler
-import option as base
+import option
+import stock
+
+
+def collect(server_url: str, underlyings: list = [], expire_months: list = [], is_test: bool = False):
+    # 盘后数据更新
+    if not trading_day.is_after_trading_updated():
+        get_daily([], expire_months)
+        stock_codes = [y for x in option.UNDERLYING for y in x["etf"]]
+        stock_codes.extend([x["index"]for x in option.UNDERLYING])
+        stock.collect(stock_codes)
+        trading_day.update_after_trading()
+
+    if is_test or trading_day.is_trading_time():
+        __collect(server_url, underlyings, expire_months)
+        stock_codes = list(set(option.GET_UNDERLYING_INDEX(u) for u in underlyings)) if len(underlyings) > 0 else [u["index"] for u in option.UNDERLYING]
+        stock.collect(stock_codes, 5)
+
+
+def __collect(server_url: str, underlyings: List[str], expire_months: List[str]):
+    options = option.get_option_info()
+    if underlyings:
+        options = [row for row in options if row["underlying"] in underlyings]
+    if expire_months:
+        options = [row for row in options if row["expire_month"] in expire_months]
+
+    time = datetime.now()    
+    expire_months = list(set(row["expire_month"] for row in options))
+    underlyings = list(set(row["underlying"] for row in options))
+    underlying_prices = stock_crawler.get_price(underlyings)
+    all_price = etf_op_crawler.get_price([row["code"] for row in options])
+    for i in range(len(underlyings)):
+        underlying = underlyings[i]
+        underlying_price = underlying_prices.loc[i, "最近成交价"]
+        for expire_month in expire_months:
+            sub_codes = [row["code"] for row in options if row["expire_month"] == expire_month and row["underlying"] == underlying]
+            body = {
+                "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "underlying": underlying,
+                "underlying_price": underlying_price,
+                "expire_month": expire_month,
+                "data": { key: __to_price(all_price[key]) for key in all_price.keys() if key in sub_codes }
+            }
+            r = requests.post(server_url + "/v1/api/tick", json.dumps(body), headers={'Content-Type': 'application/json'}, timeout=2.5)
+
+
+def __to_price(price_df):
+    """
+    Returns:
+        List:
+            [0:卖一价, 1:卖一量],
+            [0:买一价, 1:买一量],
+            [0:最新价],
+            [0:卖一买一平均价]
+    """
+    return [
+        [float(price_df.loc[20, "值"]), int(price_df.loc[21, "值"])],
+        [float(price_df.loc[22, "值"]), int(price_df.loc[23, "值"])],
+        [float(price_df.loc[2, "值"])],
+        [round((float(price_df.loc[20, "值"]) + float(price_df.loc[22, "值"])) / 2.0, 5)]
+    ]
+
+
 
 def update_etf_contract():
     print('更新ETF期权所有合约...')
@@ -18,7 +81,7 @@ def update_etf_contract():
     print(expire_day)
 
     # 标的代码
-    underlyings = [y for x in base.UNDERLYING for y in x['etf']]
+    underlyings = [y for x in option.UNDERLYING for y in x['etf']]
     print('标的ETF代码：', end='')
     print(underlyings)
 
@@ -62,54 +125,6 @@ def update_etf_contract():
         ]
         mssql.run(update_sql)
 
-
-def collect(underlyings: List[str], expire_months: List[str]):
-    now = datetime.now()
-    select_sql = "SELECT code,underlying,is_call,strike_price,expire_month,expire_day FROM OptionCode WHERE expire_month"
-    # 到期月筛选
-    if len(expire_months) == 0:
-        select_sql += ">='" + f"{now.year}{now.month:02d}'"[2:]
-    else:
-        select_sql += " in ('" + "','".join(expire_months) + "')"
-    # 标的物筛选
-    if len(underlyings) > 0:
-        select_sql += " AND underlying in ('" + "','".join(underlyings) + "')"
-
-    options = mssql.queryAll(select_sql)
-    now_time = f"{now.year}-{now.month:02d}-{now.day:02d} {now.hour:02d}:{now.minute:02d}:{now.second:02d}"
-    
-    expire_months = list(set(row["expire_month"] for row in options))
-    underlyings = list(set(row["underlying"] for row in options))
-    underlying_prices = stock_crawler.get_price(underlyings)
-    all_price = etf_op_crawler.get_price([row["code"] for row in options])
-    insert_sql = []
-    for i in range(len(underlyings)):
-        underlying = underlyings[i]
-        underlying_price = underlying_prices.loc[i, "最近成交价"]
-        for expire_month in expire_months:
-            sub_codes = [row["code"] for row in options if row["expire_month"] == expire_month and row["underlying"] == underlying]
-            data = json.dumps({key: __to_price(all_price[key]) for key in all_price.keys() if key in sub_codes}, separators=(',', ':'))
-            para = (now_time, underlying, underlying_price, expire_month, data)
-            insert_sql.append("INSERT INTO OptionPrice (time,underlying,underlying_price,expire_month,data) VALUES ('%s','%s','%s','%s','%s')" % para)
-    mssql.run(insert_sql)
-    print(f"{len(insert_sql)} collected")
-
-
-def __to_price(price_df):
-    """
-    Returns:
-        List:
-            [0:卖一价, 1:卖一量],
-            [0:买一价, 1:买一量],
-            [0:最新价],
-    """
-    return [
-        [float(price_df.loc[20, "值"]), int(price_df.loc[21, "值"])],
-        [float(price_df.loc[22, "值"]), int(price_df.loc[23, "值"])],
-        [float(price_df.loc[2, "值"])]
-    ]
-
-
 def get_daily(underlyings: List[str], expire_months: List[str]):
     now = datetime.now()
     select_sql = "SELECT code FROM OptionCode WHERE expire_month"
@@ -123,13 +138,13 @@ def get_daily(underlyings: List[str], expire_months: List[str]):
         select_sql += " AND underlying in ('" + "','".join(underlyings) + "')"
 
     codes = [row["code"] for row in mssql.queryAll(select_sql)]
-    last_trading_day = trading_day.get_last()
+    last_trading_day = datetime.strptime(trading_day.get_last(), "%Y-%m-%d")
     print("期权日K线")
     for i, code in enumerate(codes):
         time.sleep(3)
 
         print("%s/%s:" % (i + 1, len(codes)), end="")
-        select_sql = "SELECT TOP(1) day FROM StockK WHERE code='%s' ORDER BY day DESC" % code
+        select_sql = "SELECT TOP(1) day FROM StockK WHERE type=240 AND code='%s' ORDER BY day DESC" % code
         last_daily = mssql.queryAll(select_sql)
         if len(last_daily) > 0 and last_daily[0]["day"] == last_trading_day:
             print("已完成")
