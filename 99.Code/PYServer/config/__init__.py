@@ -5,7 +5,7 @@ import os
 
 # SQL Server连接字符串参数
 mssqlConnStr = (
-    os.getenv("MSSQL_HOST", "2019.sqlserver.db.service.public.hanwintech.com\\CR_MAINTAIN"),
+    os.getenv("MSSQL_HOST", "192.168.0.215\\CR_MAINTAIN"),
     os.getenv("MSSQL_USER", "sa"),
     os.getenv("MSSQL_PASSWORD", "sql@0512"),
     os.getenv("MSSQL_DB", "CH_Stock")

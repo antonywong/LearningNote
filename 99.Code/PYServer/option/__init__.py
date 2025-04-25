@@ -3,9 +3,7 @@
 from typing import List
 from datetime import datetime
 from decimal import Decimal
-import stock
-from config import trading_day
-from option import _core, _core_tick_task, akshare_collecter
+from option import _core, _core_tick_task
 
 UNDERLYING = [
     {"index":"sh000016","etf":["sh510050"],"cffex":"ho"},             # 上证50
@@ -35,8 +33,8 @@ def save_tick(time: datetime, underlying: str, underlying_price: float, expire_m
     return _core_tick_task.save_tick(time, underlying, underlying_price, expire_month, data)
 
 
-def recalculate_index():
-    return _core.recalculate_index()
+def recalculate_k_index():
+    return _core.recalculate_k_index()
 
 
 def get_etf_option_expire_day() -> List[str]:
@@ -61,3 +59,8 @@ def get_seller_holding_cost(is_call: bool, underlying_price: Decimal, strike_pri
 
 def get_latest_option_price(underlying: str, expire_month: str) -> dict:
     return _core.get_latest_option_price(underlying, expire_month)
+
+
+def volatility(code: str) -> Decimal:
+    return _core.volatility(code)
+

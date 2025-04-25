@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from config import trading_day
+from decimal import Decimal
 import option
-import arbitrage._04, arbitrage._03
-from bot import mail
+import arbitrage._04
+from strategy.qmt import delta
 
 
 IS_RUNNING = False
@@ -21,23 +21,20 @@ def fetch(underlying: str):
         IS_RUNNING = True
         """更新图表数据的函数"""
         expire_month = option.get_etf_option_expire_day()[0][0:4]
-        # 获取新数据
-        x, y, strike_price = arbitrage._04.get_new_data(underlying, expire_month, None)
+        
+        # 行权价
+        option_prices = option.get_latest_option_price(underlying, expire_month)
+        underlying_price = Decimal(option_prices["underlying_price"])
+        strike_price, secondary_strike_price = option.get_strike_price_etf(underlying_price, True)
+
+        # 获取标题
         volume_increase = arbitrage._04.get_volume_increase(underlying)
+        d = ",".join([f"{key}:{round(data["delta"], 4)}"  for key, data in delta.TOTAL_INDEX.items()])
+        result["title"] = f'[{option_prices["time"]}] - [{int(strike_price*100)}] - [volume:{round(volume_increase * 100, 2)}%] - [delta:{d}]'
 
-        option_price = option.get_latest_option_price(underlying, expire_month)
-        option_t = arbitrage._03.cal(underlying, expire_month, option_price)
-        delta = 0
-        for t in option_t:
-            c_delta = round(t["c_delta"] * 10000)
-            p_delta = round(t["p_delta"] * 10000)
-            c_lot = (t["cLot"] if t["cLot"] else 0) + (t["cLotTemp"] if t["cLotTemp"] else 0)
-            p_lot = (t["pLot"] if t["pLot"] else 0) + (t["pLotTemp"] if t["pLotTemp"] else 0)
-            delta += c_delta * c_lot + p_delta * p_lot
-        if trading_day.is_trading_time() and abs(delta) > 40000:
-            mail.send_message("1411038526@qq.com", "组合delta预警", f"组合delta：{delta}")
-
-        result["title"] = f'[{option_price["time"]}] - [{strike_price}] - [volume:{round(volume_increase * 100, 2)}%] - [delta:{delta}]'
+        # 获取新数据
+        codes = list(set([position[1:] for key, data in delta.TOTAL_INDEX.items() for position in data["position_contracts"]]))
+        x, y = arbitrage._04.get_new_data(codes)
         result["x"] = x
         result["y"] = [round(f, 4) for f in y]
 

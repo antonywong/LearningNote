@@ -21,8 +21,7 @@ def run(underlyings: List[str], expire_months: List[str], is_test: bool = False)
     for underlying in underlyings:
         for expire_month in expire_months:
             # 最新买卖价
-            select_sql = "SELECT top(1) time,underlying_price,data FROM OptionPrice WHERE underlying='%s' AND expire_month='%s'"
-            option_price = mssql.queryAll(select_sql % (underlying, expire_month))[0]
+            option_price = option.get_latest_option_price(underlying, expire_month)
             price_data = json.loads(option_price['data'])
 
             # T型报价

@@ -16,11 +16,12 @@ def cal(is_call: bool, is_buy: bool, code: str, strike_price: Decimal, option_pr
     properties = price_data[code][3]
     result = ModelOptionProperty(
         op_code = "+" + code,
-        holding_cost = round(properties[0] * 10000, 2),
-        delta = properties[5],
-        gamma = properties[6],
-        vega = properties[7],
-        theta = properties[8],
+        holding_cost = float(round(properties[0] * 10000, 2)),
+        time_value = float(properties[2]),
+        delta = float(properties[5]),
+        gamma = float(properties[6]),
+        vega = float(properties[7]),
+        theta = float(properties[8]),
         strike_price = strike_price.quantize(Decimal("0.00")),
         op_name = "买"
     )

@@ -49,7 +49,7 @@ def __process_data():
             current_batch = cache.copy()
             cache.clear()
         
-        # 实际处理逻辑（原save_tick中的业务）
+        # 实际处理逻辑
         for data in current_batch:
             __save_tick(data)
         
@@ -63,30 +63,34 @@ def __save_tick(tick_data):
     data = tick_data[4]
 
     cache_key = (underlying, expire_month)
-    if cache_key in config.CACHE_LATEST_OPTION_PRICE.keys() and config.CACHE_LATEST_OPTION_PRICE[cache_key]["time"] >= time:
-        return
+    # if cache_key in config.CACHE_LATEST_OPTION_PRICE.keys() and config.CACHE_LATEST_OPTION_PRICE[cache_key]["time"] >= time:
+    #     return
     
-    v = float(stock.volatility(option.GET_UNDERLYING_INDEX(underlying))) # 历史波动率
-    codes = sorted(data.keys())
-    sorted_data = {}
+    v = float(option.volatility(option.GET_UNDERLYING_INDEX(underlying))) # 历史波动率
+    codes = data.keys()
     option_codes = option.get_option_info(codes)
     days = (date(int("20" + expire_month[0:2]), int(expire_month[2:4]), int(option_codes[0]["expire_day"])) - time.date()).days + 1
     contracts = {row["code"]: row for row in option_codes}
+    all_sql = []
+    insert_sql = []
     for code in codes:
         c = contracts[code]
         d = data[code]
-        # d[2] 以最新成交价计算各类指标
-        #d[2] = _core.calculate_index(float(underlying_price), float(c["strike_price"]), days, d[2][0], c["is_call"])
-        #d[2][4] = v # 历史波动率
-        # d[3] 以买一卖一平均价计算各类指标
         d[3] = _core.calculate_index(float(underlying_price), float(c["strike_price"]), days, d[3][0], c["is_call"])
         d[3][4] = v # 历史波动率
-        sorted_data[code] = d
 
-    para = (time, underlying, underlying_price, expire_month, json.dumps(sorted_data, separators=(',', ':')))
-    insert_sql = ["INSERT INTO OptionPrice (time,underlying,underlying_price,expire_month,data) VALUES ('%s','%s','%s','%s','%s')" % para]
-    mssql.run(insert_sql)
+        tick_time_str = d[4][0].strftime("%Y-%m-%d %H:%M:%S")
+        all_sql.append("DELETE FROM OptionTick WHERE code='%s' AND time=CONVERT(DATETIME, '%s', 20)" % (code, tick_time_str))
+        content = "('%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        insert_sql.append(content % (code, tick_time_str, underlying_price,
+                                d[0][0], d[0][1],
+                                d[1][0],d[1][1],
+                                d[2][0],
+                                d[3][0], d[3][1], d[3][2], d[3][3], d[3][4], d[3][5], d[3][6], d[3][7], d[3][8], d[3][9]))
+    if insert_sql:
+        all_sql.append("INSERT INTO OptionTick (code,time,underlying_price,sell1price,sell1vol,buy1price,buy1vol,price,vprice,in_value,time_value,iv,hv,delta,gamma,vega,theta,rho) VALUES " + ",".join(insert_sql))
+        mssql.run(all_sql)
 
-    cache_value = {"time": time, "underlying": underlying, "underlying_price": underlying_price, "expire_month": expire_month, "data": data}
-    config.CACHE_LATEST_OPTION_PRICE[cache_key] = cache_value
+        cache_value = {"time": time, "underlying": underlying, "underlying_price": underlying_price, "expire_month": expire_month, "data": data}
+        config.CACHE_LATEST_OPTION_PRICE[cache_key] = cache_value
 

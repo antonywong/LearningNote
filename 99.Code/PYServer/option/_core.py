@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import json
+import math
 import numpy as np
 from scipy import stats
 from datetime import datetime, date
@@ -11,42 +11,52 @@ from dal import mssql
 import config
 from config import trading_day
 import option, option.akshare_collecter
-import stock
 
 
 BS_RISK_FREE_RATE = 0.01
 BS_UNDERLYING_DIVIDEND_RATE = 0.0
 
 
-def recalculate_index():
-    select_sql = "SELECT id,time,underlying,underlying_price,expire_month,data FROM OptionPrice WHERE calculated=0"
-    for price_data in mssql.queryAll(select_sql):
-        time = price_data["time"]
-        underlying = price_data["underlying"]
-        underlying_price = price_data["underlying_price"]
-        expire_month =  price_data["expire_month"]
-        data = json.loads(price_data["data"])
-        v = float(stock.volatility(option.GET_UNDERLYING_INDEX(underlying))) # 历史波动率
-        codes = sorted(data.keys())
-        sorted_data = {}
-        option_codes = option.get_option_info(codes)
-        days = (date(int("20" + expire_month[0:2]), int(expire_month[2:4]), int(option_codes[0]["expire_day"])) - time.date()).days + 1
-        contracts = {row["code"]: row for row in option_codes}
-        for code in codes:
-            c = contracts[code]
-            d = data[code]
-            # d[2] 以最新成交价计算各类指标
-            #d[2] = _core.calculate_index(float(underlying_price), float(c["strike_price"]), days, d[2][0], c["is_call"])
-            #d[2][4] = v # 历史波动率
-            data[code][2] = data[code][2][0:1]
-            # d[3] 以买一卖一平均价计算各类指标
-            d[3] = calculate_index(float(underlying_price), float(c["strike_price"]), days, d[3][0], c["is_call"])
-            d[3][4] = v # 历史波动率
-            sorted_data[code] = d
-        
-        para = (json.dumps(sorted_data, separators=(',', ':')), price_data["id"])
-        insert_sql = ["UPDATE OptionPrice SET data='%s', calculated=1 WHERE id='%s'" % para]
-        mssql.run(insert_sql)
+def recalculate_k_index():
+    select_sql = """
+SELECT TOP(10000) k.id,k.day,k.[close],oc.underlying,uk.[close] AS underlying_price,oc.strike_price,oc.expire_month,oc.expire_day,oc.is_call
+ FROM K k
+    LEFT JOIN OptionKGreek kg ON k.id= kg.id
+    LEFT JOIN OptionCode oc ON k.code=oc.code
+    LEFT JOIN K uk ON oc.underlying=uk.code AND k.type=uk.type AND k.day=uk.day
+ WHERE kg.id IS NULL AND k.code IN (SELECT code FROM OptionCode)"""
+    while True:
+        all = mssql.queryAll(select_sql)
+        if all:
+            print("CALCULATING_10000_K_INDEX")
+        else:
+            break
+
+        group_size = 1000
+        for i in range(0, len(all), group_size):
+            sub = all[i:i + group_size]
+            insert_sql = []
+            for price_data in sub:
+                if not price_data["underlying_price"]:
+                    insert_sql.append("DELETE FROM K WHERE id=%s" % price_data["id"])
+                    continue
+                underlying_price = float(price_data["underlying_price"])
+                strike_price = float(price_data["strike_price"])
+                time = price_data["day"]
+                expire_month = price_data["expire_month"]
+                expire_day = price_data["expire_day"]
+                days = (date(int("20" + expire_month[0:2]), int(expire_month[2:4]), int(expire_day)) - time.date()).days + 1
+                if days <= 0:
+                    insert_sql.append("DELETE FROM K WHERE id=%s" % price_data["id"])
+                    continue
+                option_price = float(price_data["close"])
+                is_call = price_data["is_call"]
+
+                index = calculate_index(underlying_price, strike_price, days, option_price, is_call)
+                para = (price_data["id"], index[3], index[1], index[2], index[5], index[6], index[7], index[8], index[9])
+                insert_sql.append("INSERT INTO OptionKGreek (id,iv,inner_value,time_value,delta,gamma,vega,theta,rho) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)" % para)
+            if insert_sql:
+                mssql.run(insert_sql)
 
 
 """计算d1
@@ -66,6 +76,8 @@ Returns:
 """
 def calculate_index(underlying_price: float, strike_price: float, days: float, option_price: float, is_call: bool) -> List:
     value = (underlying_price - strike_price) * (1 if is_call else -1)
+    if value < 0:
+        value = 0
     time_value = option_price - value
     iv = bsm_implied_volatility(underlying_price, strike_price, days, option_price, is_call)
     T = days / 360.0
@@ -233,7 +245,13 @@ def get_latest_option_price(underlying: str, expire_month: str) -> dict:
     """获取当前数据库最新的合约价格数据（标准合约）"""
     cache_key = (underlying, expire_month)
     if underlying and expire_month and cache_key not in config.CACHE_LATEST_OPTION_PRICE.keys():
-        select_sql = "SELECT top(1) time,underlying_price,data FROM OptionPrice WHERE underlying='%s' AND expire_month='%s' ORDER BY time DESC"
+        select_sql = """
+SELECT ot.*
+FROM OptionCode oc
+    CROSS APPLY (
+        SELECT TOP(1) * FROM OptionTick WHERE code = oc.code ORDER BY time DESC
+    ) ot
+WHERE oc.underlying='%s' AND oc.expire_month='%s' AND oc.is_standard=1"""
         option_prices = mssql.queryAll(select_sql % cache_key)
         if len(option_prices) > 0:
             price = option_prices[0]
@@ -242,6 +260,23 @@ def get_latest_option_price(underlying: str, expire_month: str) -> dict:
                 "underlying": underlying,
                 "underlying_price": price["underlying_price"],
                 "expire_month": expire_month,
-                "data": json.loads(price["data"])
+                "data": {t["code"]:[
+                    [t["sell1price"], t["sell1vol"]],
+                    [t["buy1price"], t["buy1vol"]],
+                    [t["price"]],
+                    [t["vprice"], t["in_value"], t["time_value"], t["iv"], t["hv"], t["delta"], t["gamma"], t["vega"], t["theta"], t["rho"]]
+                ] for t in option_prices}
             }
     return config.CACHE_LATEST_OPTION_PRICE[cache_key]
+
+
+def volatility(code: str) -> Decimal:
+    """计算历史波动率
+    """
+    select_sql = "SELECT TOP(61) [close] FROM K WHERE code='%s' AND type=240 ORDER BY day DESC"
+    close = [float(row["close"]) for row in mssql.queryAll(select_sql % code)]
+    if len(close) == 0:
+        return 0.0
+    increase = np.array([math.log(close[i] / close[i - 1]) for i in range(1, len(close))])
+
+    return Decimal(np.std(increase) * np.sqrt(252)).quantize(Decimal('0.000000'))

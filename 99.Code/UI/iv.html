@@ -62,7 +62,7 @@
                 },
                 async fetchData() {
                     try {
-                        const response = await fetch('http://10.10.10.17:5000/v1/api/_04/echarts?underlying=sz159915');
+                        const response = await fetch('http://10.10.10.18:5000/v1/api/_04/echarts?underlying=sz159915');
                         var res_json = await response.json();
                         console.log(res_json[0]["x"])
                         if (res_json[0]["msg"]) {
@@ -91,7 +91,7 @@
                 
                 this.updateInterval = setInterval(() => {
                     this.fetchData();
-                }, 9000);
+                }, 15000);
                 
                 window.addEventListener('resize', this.handleResize);
             },

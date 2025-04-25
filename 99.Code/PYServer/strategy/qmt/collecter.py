@@ -82,17 +82,27 @@ def post_tick(request_json: dict) -> str:
     if not trading_day.is_after_trading_updated():
         return "AFTER_TRADING_NOT_UPDATED"
 
-    #print(request_json["tick"])
-    timetag = max([datetime.strptime(t["timetag"][0:17], '%Y%m%d %H:%M:%S') for code, t in request_json["tick"].items()])
-    timetag_minute = timetag.hour * 100 + timetag.minute
-    if timetag_minute < 930 or 1500 < timetag_minute:
-        return ""
-
+    # print(request_json["tick"])
+    time = datetime.min
     underlying = request_json["underlying"]
     expire_month = request_json["expire_month"]
     underlying_price = request_json["underlying_price"]
-    data = { key[0:8]: __to_price(value) for key, value in request_json["tick"].items()}        
-    option.save_tick(timetag, underlying, underlying_price, expire_month, data)
+    data = {}
+    for key, value in request_json["tick"].items():
+        timetag = datetime.strptime(value["timetag"][0:17], "%Y%m%d %H:%M:%S")
+        timetag_minute = timetag.hour * 100 + timetag.minute
+        if timetag_minute < 930 or 1500 < timetag_minute:
+            continue
+
+        time = max([time, timetag])
+        data[key[0:8]] = __to_price(value)
+        data[key[0:8]].append([timetag])
+        
+    if not data:
+        print("TICK_IS_NONE")
+        return ""
+
+    option.save_tick(time, underlying, underlying_price, expire_month, data)
     return ""
 
 
@@ -103,6 +113,7 @@ def __to_price(price):
             [0:卖一价, 1:卖一量],
             [0:买一价, 1:买一量],
             [0:最新价],
+            [0:盘口平均价]
     """
     return [
         [round(price["askPrice"][0], 4), int(price["askVol"][0])],
@@ -120,14 +131,14 @@ def get_k_1m_time(request_json: dict) -> dict:
         elif len(code_part[0]) == 8:
             code_dict[qmt_code] = code_part[0]
 
-    select_sql = "SELECT code,max(day) AS day FROM StockK WHERE type=1 AND code in ('%s') GROUP BY code"
+    select_sql = "SELECT code,max(day) AS day FROM K WHERE type=1 AND code in ('%s') GROUP BY code"
     codes = [r for key, r in code_dict.items()]
     option_time = {row["code"]: row["day"] for row in mssql.queryAll(select_sql % "','".join(codes))}
 
     for key, r in code_dict.items():
         if r not in option_time.keys():
             date = datetime.now() - timedelta(days=300)
-            return f"{date.year}{date.month}15093000"
+            return date.strftime("%Y%m") + "15093000"
 
     return min([day for key, day in option_time.items()]).strftime("%Y%m%d%H%M%S")
 
@@ -145,11 +156,12 @@ def post_k_1m(request_json: dict) -> str:
         else:
             continue
         day = datetime.strptime(data["day"], "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
-        sql.append("DELETE FROM StockK WHERE type=1 AND code='%s' AND day='%s'" % (code, day))
+        sql.append("DELETE FROM K WHERE type=1 AND code='%s' AND day='%s'" % (code, day))
         para = (code, day, round(data["open"], 6), round(data["high"], 6), round(data["low"], 6), round(data["close"], 6), int(data["volume"]))
-        sql.append("INSERT INTO StockK (type,code,day,[open],high,low,[close],volume) VALUES (1,'%s','%s',%s,%s,%s,%s,%s)" % para)
+        sql.append("INSERT INTO K (type,code,day,[open],high,low,[close],volume) VALUES (1,'%s','%s',%s,%s,%s,%s,%s)" % para)
 
     mssql.run(sql)
+    print(f"DEAL_K_{len(sql) / 2}")
     return ""
 
 
@@ -159,6 +171,7 @@ def update_after_trading() -> str:
         underlyings.extend([etf for u in option.UNDERLYING for etf in u["etf"]])
         for underlying in underlyings:
             __update_k_1d(underlying)
+        option.recalculate_k_index()
         trading_day.update_after_trading()
         return ""
     except Exception as e:
@@ -168,23 +181,23 @@ def update_after_trading() -> str:
 
 def __update_k_1d(underlying):
     print(f"__update_k_1d({underlying})")
-    select_sql = "SELECT TOP(1) day FROM StockK WHERE type=240 AND code='%s' ORDER BY day DESC"
+    select_sql = "SELECT TOP(1) day FROM K WHERE type=240 AND code='%s' ORDER BY day DESC"
     days = mssql.queryAll(select_sql % underlying)
     last_day = days[0]["day"] if days else datetime(2025, 3, 27)
     while last_day < datetime.now():
         last_day_str = last_day.strftime("%Y-%m-%d")
-        select_sql = "SELECT [open],high,low,[close],volume FROM StockK WHERE type=1 AND code='%s' AND CONVERT(CHAR(10), day, 20)='%s' ORDER BY day DESC"
+        select_sql = "SELECT [open],high,low,[close],volume FROM K WHERE type=1 AND code='%s' AND CONVERT(CHAR(10), day, 20)='%s' ORDER BY day DESC"
         minutes = mssql.queryAll(select_sql % (underlying, last_day_str))
         if len(minutes) != 241:
             last_day = last_day + timedelta(days=1)
             continue
 
-        sql = ["DELETE FROM StockK WHERE type=240 AND code='%s' AND day='%s 00:00:00'" % (underlying, last_day_str)]
+        sql = ["DELETE FROM K WHERE type=240 AND code='%s' AND day='%s 00:00:00'" % (underlying, last_day_str)]
         high = max([m["high"] for m in minutes])
         low = min([m["low"] for m in minutes])
         volume = sum([m["volume"] for m in minutes]) * 100
         para = (underlying, last_day_str, minutes[-1]["open"], high, low, minutes[0]["close"], volume)
-        sql.append("INSERT INTO StockK (type,code,day,[open],high,low,[close],volume) VALUES (240,'%s','%s 00:00:00','%s','%s','%s','%s','%s')" % para)
+        sql.append("INSERT INTO K (type,code,day,[open],high,low,[close],volume) VALUES (240,'%s','%s 00:00:00','%s','%s','%s','%s','%s')" % para)
         mssql.run(sql)
 
         last_day = last_day + timedelta(days=1)

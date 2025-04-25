@@ -8,6 +8,7 @@ from decimal import Decimal
 class ModelOptionProperty:
     op_code: str
     holding_cost: float
+    time_value: float
     delta: float
     gamma: float
     vega: float

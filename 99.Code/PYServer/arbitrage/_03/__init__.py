@@ -47,6 +47,16 @@ def cal(underlying: str, expire_month: str, option_price: dict) -> dict:
     # 扩充T型报价
     for i, t_row in enumerate(option_t):
         t_row["strike_price"] = t_row["strike_price"].quantize(Decimal('0.00'))
+
+        if not t_row["cLot"]:
+            t_row["cLot"] = 0
+        if not t_row["pLot"]:
+            t_row["pLot"] = 0
+        if not t_row["cLotTemp"]:
+            t_row["cLotTemp"] = 0
+        if not t_row["pLotTemp"]:
+            t_row["pLotTemp"] = 0
+
         if t_row["strike_price"] == main_strike_price:
             t_row["main"] = "☷"
             if underlying_price < main_strike_price and i > 0:
@@ -55,6 +65,7 @@ def cal(underlying: str, expire_month: str, option_price: dict) -> dict:
                 option_t[i + 1]["main"] = "☰"
         elif "main" not in t_row.keys():
             t_row["main"] = ""
+
         __cal_t(t_row, "c", price_data)
         __cal_t(t_row, "p", price_data)
     return option_t

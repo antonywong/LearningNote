@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from. import collecter, delta
+from . import collecter, delta
 
 bp = Blueprint('qmt', __name__, url_prefix='/v1/api/qmt')
 
@@ -30,6 +30,12 @@ def post_k_1m():
 @bp.route('/after_trading', methods=['POST'])
 def post_after_trading():
     return jsonify(collecter.update_after_trading()), 200, {'Content-Type': 'application/json; charset=utf-8'}
+
+
+
+@bp.route('/pre_delta', methods=['POST'])
+def pre_delta():
+    return jsonify(delta.pre(request.get_json())), 200, {'Content-Type': 'application/json; charset=utf-8'}
 
 @bp.route('/delta', methods=['POST'])
 def get_delta():

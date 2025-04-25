@@ -7,3 +7,5 @@ bs4
 pyinstaller
 flask
 flask-cors
+gunicorn
+gevent

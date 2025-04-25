@@ -1,19 +1,10 @@
-FROM python:3.9-slim
+FROM python:3.12-alpine
 WORKDIR /app
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
 COPY . .
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip --no-cache-dir install -r requirements.txt
 
-# 创建数据存储目录
-RUN mkdir -p /data /tdx
+EXPOSE 80
 
-VOLUME /data /tdx
-
-CMD ["python", "main.py"]
+CMD gunicorn -c gunicorn.conf webapi:app

@@ -144,19 +144,19 @@ def get_daily(underlyings: List[str], expire_months: List[str]):
         time.sleep(3)
 
         print("%s/%s:" % (i + 1, len(codes)), end="")
-        select_sql = "SELECT TOP(1) day FROM StockK WHERE type=240 AND code='%s' ORDER BY day DESC" % code
+        select_sql = "SELECT TOP(1) day FROM K WHERE type=240 AND code='%s' ORDER BY day DESC" % code
         last_daily = mssql.queryAll(select_sql)
         if len(last_daily) > 0 and last_daily[0]["day"] == last_trading_day:
             print("已完成")
             continue
 
         ks = etf_op_crawler.get_daily(code).drop_duplicates()
-        sql = ["DELETE FROM StockK WHERE code='%s' AND type=240 AND day=CONVERT(DATETIME,'%s',102)" % (code, row["日期"]) for i, row in ks.iterrows()]
-        sql.extend(["INSERT INTO StockK (code,type,day,[open],high,low,[close],volume) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s')"
+        sql = ["DELETE FROM K WHERE code='%s' AND type=240 AND day=CONVERT(DATETIME,'%s',102)" % (code, row["日期"]) for i, row in ks.iterrows()]
+        sql.extend(["INSERT INTO K (code,type,day,[open],high,low,[close],volume) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s')"
                     % (code, "240", row["日期"], row["开盘"], row["最高"], row["最低"], row["收盘"], row["成交量"])
                     for i, row in ks.iterrows()])
         mssql.run(sql)
         print("K线数量%s" % int(len(sql) / 2))
     
-    delete_sql = "DELETE FROM StockK WHERE (SELECT MIN(day) FROM TradingDay)<=day AND day<=(SELECT MAX(day) FROM TradingDay) AND CAST(day as DATE) NOT IN (SELECT day FROM TradingDay)"
+    delete_sql = "DELETE FROM K WHERE (SELECT MIN(day) FROM TradingDay)<=day AND day<=(SELECT MAX(day) FROM TradingDay) AND CAST(day as DATE) NOT IN (SELECT day FROM TradingDay)"
     mssql.run([delete_sql])
